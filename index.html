@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CoParent Compass — Live Data Edition</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0f1923;
+    --paper: #f5f0e8;
+    --warm: #ede8d8;
+    --accent: #c8572a;
+    --accent2: #2a7bc8;
+    --gold: #c8a02a;
+    --muted: #7a7060;
+    --success: #2a8c5a;
+    --card: #ffffff;
+    --border: #d8ceb8;
+    --shadow: rgba(15,25,35,0.08);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--paper); color:var(--ink); font-family:'DM Sans',sans-serif; min-height:100vh; overflow-x:hidden; }
+  body::before { content:''; position:fixed; inset:0; pointer-events:none; z-index:9999; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E"); }
+
+  header { background:var(--ink); color:var(--paper); padding:0 2rem; display:flex; align-items:center; justify-content:space-between; height:60px; position:sticky; top:0; z-index:200; border-bottom:2px solid var(--accent); }
+  .logo { font-family:'Playfair Display',serif; font-size:1.35rem; font-weight:700; letter-spacing:-0.02em; }
+  .logo span { color:var(--gold); }
+  nav { display:flex; gap:0.2rem; }
+  nav button { background:none; border:none; cursor:pointer; color:var(--paper); opacity:0.55; font-family:'DM Sans',sans-serif; font-size:0.75rem; font-weight:600; padding:0.4rem 0.7rem; border-radius:5px; transition:all 0.2s; text-transform:uppercase; letter-spacing:0.06em; }
+  nav button:hover, nav button.active { opacity:1; background:rgba(200,87,42,0.18); color:var(--gold); }
+
+  .hero { background:var(--ink); color:var(--paper); padding:3.5rem 2rem 4rem; text-align:center; position:relative; overflow:hidden; }
+  .hero::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 20% 50%,rgba(200,87,42,0.12) 0%,transparent 60%),radial-gradient(ellipse at 80% 30%,rgba(42,123,200,0.1) 0%,transparent 55%); }
+  .hero::after { content:''; position:absolute; bottom:-1px; left:0; right:0; height:55px; background:var(--paper); clip-path:ellipse(58% 100% at 50% 100%); }
+  .hero h1 { font-family:'Playfair Display',serif; font-size:clamp(1.9rem,5vw,3.2rem); font-weight:900; line-height:1.1; margin-bottom:0.9rem; position:relative; }
+  .hero h1 em { color:var(--gold); font-style:italic; }
+  .hero p { color:rgba(245,240,232,0.72); font-size:1rem; max-width:520px; margin:0 auto 1.5rem; line-height:1.75; position:relative; }
+  .live-badge { display:inline-flex; align-items:center; gap:0.4rem; background:rgba(200,160,42,0.15); border:1px solid rgba(200,160,42,0.4); border-radius:20px; padding:0.3rem 0.8rem; font-size:0.73rem; font-weight:600; color:var(--gold); letter-spacing:0.07em; text-transform:uppercase; position:relative; }
+  .live-dot { width:7px; height:7px; border-radius:50%; background:var(--gold); animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.4;transform:scale(0.7);} }
+
+  .tabs-wrap { max-width:880px; margin:2rem auto 0; padding:0 1rem; }
+  .tabs { display:flex; background:var(--warm); border-radius:12px; padding:4px; border:1px solid var(--border); }
+  .tab-btn { flex:1; padding:0.7rem 0.75rem; background:none; border:none; cursor:pointer; font-family:'DM Sans',sans-serif; font-size:0.82rem; font-weight:500; color:var(--muted); border-radius:9px; transition:all 0.25s; display:flex; align-items:center; justify-content:center; gap:0.35rem; }
+  .tab-btn.active { background:var(--card); color:var(--ink); box-shadow:0 2px 8px var(--shadow); font-weight:600; }
+
+  main { max-width:880px; margin:0 auto; padding:2rem 1rem 5rem; }
+  .panel { display:none; animation:fadeUp 0.3s ease; }
+  .panel.active { display:block; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);} }
+
+  .card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:1.75rem; margin-bottom:1.25rem; box-shadow:0 2px 12px var(--shadow); }
+  .card-title { font-family:'Playfair Display',serif; font-size:1.2rem; font-weight:700; margin-bottom:1.2rem; display:flex; align-items:center; gap:0.5rem; }
+
+  .form-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:1rem; }
+  .form-group { display:flex; flex-direction:column; gap:0.4rem; }
+  label { font-size:0.72rem; font-weight:600; text-transform:uppercase; letter-spacing:0.07em; color:var(--muted); }
+  select, input[type="number"], input[type="text"] { border:1.5px solid var(--border); border-radius:8px; padding:0.6rem 0.8rem; font-family:'DM Sans',sans-serif; font-size:0.92rem; color:var(--ink); background:var(--paper); transition:border-color 0.2s; width:100%; }
+  select:focus, input:focus { outline:none; border-color:var(--accent2); background:#fff; }
+
+  .btn { display:inline-flex; align-items:center; justify-content:center; gap:0.4rem; padding:0.75rem 1.4rem; border-radius:8px; border:none; cursor:pointer; font-family:'DM Sans',sans-serif; font-size:0.875rem; font-weight:600; transition:all 0.2s; letter-spacing:0.02em; }
+  .btn:disabled { opacity:0.5; cursor:not-allowed; }
+  .btn-live { background:linear-gradient(135deg,#1a6b3a,#2a8c5a); color:#fff; box-shadow:0 3px 10px rgba(42,140,90,0.3); }
+  .btn-live:hover:not(:disabled) { transform:translateY(-1px); filter:brightness(1.1); }
+  .btn-secondary { background:var(--ink); color:var(--paper); }
+  .btn-secondary:hover:not(:disabled) { background:#1e2e3e; }
+  .btn-outline { background:transparent; color:var(--ink); border:1.5px solid var(--border); }
+  .btn-outline:hover { border-color:var(--ink); background:var(--warm); }
+  .btn-block { width:100%; }
+
+  .search-status { display:none; background:linear-gradient(135deg,#0f2a1a,#0f1923); border:1px solid rgba(42,140,90,0.3); border-radius:12px; padding:1.25rem 1.5rem; margin-bottom:1.25rem; color:var(--paper); }
+  .search-status.visible { display:block; animation:fadeUp 0.3s ease; }
+  .search-label { font-size:0.72rem; font-weight:600; text-transform:uppercase; letter-spacing:0.1em; color:#4ade80; margin-bottom:0.6rem; display:flex; align-items:center; gap:0.4rem; }
+  .search-steps { list-style:none; }
+  .search-step { display:flex; align-items:flex-start; gap:0.6rem; font-size:0.82rem; color:rgba(245,240,232,0.65); padding:0.25rem 0; transition:color 0.3s; }
+  .search-step.done { color:#4ade80; }
+  .search-step.active { color:#fbbf24; }
+  .step-icon { font-size:0.85rem; flex-shrink:0; width:18px; text-align:center; }
+
+  .sources-strip { display:none; background:var(--warm); border:1px solid var(--border); border-radius:10px; padding:0.9rem 1.1rem; margin-bottom:1.25rem; font-size:0.78rem; }
+  .sources-strip.visible { display:block; animation:fadeUp 0.3s ease; }
+  .sources-strip strong { color:var(--success); display:block; margin-bottom:0.4rem; }
+  .source-tags { display:flex; flex-wrap:wrap; gap:0.4rem; margin-top:0.4rem; }
+  .source-tag { background:#fff; border:1px solid var(--border); border-radius:20px; padding:0.15rem 0.6rem; font-size:0.7rem; color:var(--muted); font-family:'DM Mono',monospace; }
+  .confidence-bar { height:4px; background:var(--border); border-radius:2px; margin-top:0.6rem; overflow:hidden; }
+  .confidence-fill { height:100%; border-radius:2px; background:linear-gradient(90deg,var(--accent2),var(--success)); transition:width 1s ease; }
+
+  .results-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:1rem; margin:1.5rem 0; }
+  .result-card { background:var(--ink); color:var(--paper); border-radius:12px; padding:1.1rem; text-align:center; }
+  .result-card.accent{background:var(--accent);} .result-card.blue{background:var(--accent2);} .result-card.gold{background:var(--gold);color:var(--ink);}
+  .result-label { font-size:0.65rem; text-transform:uppercase; letter-spacing:0.1em; opacity:0.65; margin-bottom:0.35rem; }
+  .result-value { font-family:'DM Mono',monospace; font-size:1.45rem; font-weight:500; }
+
+  .breakdown { width:100%; border-collapse:collapse; font-size:0.855rem; }
+  .breakdown th { text-align:left; padding:0.55rem 0.7rem; background:var(--warm); font-size:0.68rem; letter-spacing:0.07em; text-transform:uppercase; color:var(--muted); border-bottom:2px solid var(--border); }
+  .breakdown td { padding:0.6rem 0.7rem; border-bottom:1px solid var(--border); vertical-align:middle; }
+  .breakdown tr:last-child td { border-bottom:none; }
+  .breakdown tr:hover td { background:var(--warm); }
+  .breakdown tfoot td { background:var(--warm); }
+  .mono { font-family:'DM Mono',monospace; font-size:0.855rem; }
+  .badge { display:inline-block; padding:0.12rem 0.45rem; border-radius:20px; font-size:0.65rem; font-weight:600; letter-spacing:0.04em; text-transform:uppercase; }
+  .badge-high{background:#fee2e2;color:#991b1b;} .badge-mid{background:#fef3c7;color:#92400e;} .badge-low{background:#dcfce7;color:#166534;}
+  .range-note { font-size:0.7rem; color:var(--muted); display:block; margin-top:0.1rem; }
+
+  .strategy-card { border:1px solid var(--border); border-radius:12px; overflow:hidden; margin-bottom:1rem; }
+  .strategy-header { display:flex; align-items:center; gap:0.7rem; padding:0.9rem 1.1rem; background:var(--warm); cursor:pointer; user-select:none; }
+  .strategy-header:hover { background:#e0d8c8; }
+  .strategy-icon { width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1rem; flex-shrink:0; }
+  .strategy-title { font-weight:600; font-size:0.92rem; flex:1; }
+  .strategy-chevron { color:var(--muted); transition:transform 0.25s; font-size:0.7rem; }
+  .strategy-card.open .strategy-chevron { transform:rotate(180deg); }
+  .strategy-body { display:none; padding:1.1rem 1.25rem; border-top:1px solid var(--border); line-height:1.75; color:#3a3530; font-size:0.875rem; }
+  .strategy-card.open .strategy-body { display:block; }
+  .tip-list { list-style:none; margin-top:0.7rem; }
+  .tip-list li { display:flex; gap:0.6rem; margin-bottom:0.55rem; align-items:flex-start; }
+  .tip-list li::before { content:'→'; color:var(--accent); font-weight:700; flex-shrink:0; margin-top:0.05rem; }
+
+  .chat-area { border:1.5px solid var(--border); border-radius:12px; overflow:hidden; }
+  .chat-messages { min-height:280px; max-height:420px; overflow-y:auto; padding:1.1rem; display:flex; flex-direction:column; gap:0.7rem; background:var(--paper); }
+  .msg { max-width:84%; padding:0.7rem 0.95rem; border-radius:12px; font-size:0.86rem; line-height:1.7; }
+  .msg.assistant { background:var(--ink); color:var(--paper); border-radius:4px 12px 12px 12px; align-self:flex-start; }
+  .msg.user { background:var(--accent); color:#fff; border-radius:12px 4px 12px 12px; align-self:flex-end; }
+  .chat-input-row { display:flex; gap:0.5rem; padding:0.7rem; background:var(--warm); border-top:1px solid var(--border); }
+  .chat-input-row input { flex:1; background:#fff; }
+
+  .dots { display:inline-flex; gap:3px; align-items:center; }
+  .dots span { width:5px; height:5px; border-radius:50%; background:var(--gold); animation:bounce 1.2s infinite; }
+  .dots span:nth-child(2){animation-delay:.2s;} .dots span:nth-child(3){animation-delay:.4s;}
+  @keyframes bounce { 0%,80%,100%{transform:translateY(0);}40%{transform:translateY(-5px);} }
+
+  .disclaimer { background:linear-gradient(135deg,#fef3c7,rgba(253,230,138,0.15)); border:1px solid rgba(245,158,11,0.3); border-radius:10px; padding:0.9rem 1.1rem; font-size:0.76rem; color:#78350f; line-height:1.65; margin-top:1.25rem; }
+  .disclaimer strong { display:block; margin-bottom:0.2rem; }
+  .divider { height:1px; background:var(--border); margin:1.25rem 0; }
+  .section-header { display:flex; align-items:center; gap:0.7rem; margin-bottom:1.5rem; }
+  .section-header h2 { font-family:'Playfair Display',serif; font-size:1.5rem; font-weight:700; }
+  .section-header .line { flex:1; height:1px; background:var(--border); }
+  .info-chip { display:inline-flex; align-items:center; gap:0.3rem; background:var(--warm); border:1px solid var(--border); border-radius:20px; padding:0.2rem 0.6rem; font-size:0.72rem; font-weight:500; color:var(--muted); }
+  .data-note { display:inline-flex; align-items:center; gap:0.3rem; font-size:0.72rem; color:var(--success); font-weight:500; margin-left:auto; }
+  @media(max-width:600px){header{padding:0 1rem;}.logo{font-size:1.1rem;}nav button{font-size:0.68rem;padding:0.3rem 0.45rem;}.card{padding:1.1rem;}.tab-btn{font-size:0.72rem;padding:0.55rem 0.35rem;}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Co<span>Parent</span> Compass</div>
+  <nav>
+    <button class="active" onclick="switchTab('calculator')">📊 Calculator</button>
+    <button onclick="switchTab('shield')">🛡️ Shield</button>
+    <button onclick="switchTab('advisor')">💬 Advisor</button>
+  </nav>
+</header>
+
+<div class="hero">
+  <h1>Know Your Numbers.<br><em>Protect Your Bond.</em></h1>
+  <p>Child support estimates powered by live web research — pulling from reports, surveys, and real-world pricing for your specific city and country.</p>
+  <div class="live-badge"><div class="live-dot"></div> Live Data Engine Active</div>
+</div>
+
+<div class="tabs-wrap">
+  <div class="tabs">
+    <button class="tab-btn active" id="tab-calculator" onclick="switchTab('calculator')">📊 Support Calculator</button>
+    <button class="tab-btn" id="tab-shield" onclick="switchTab('shield')">🛡️ Alienation Shield</button>
+    <button class="tab-btn" id="tab-advisor" onclick="switchTab('advisor')">💬 AI Advisor</button>
+  </div>
+</div>
+
+<main>
+
+<!-- CALCULATOR -->
+<div id="panel-calculator" class="panel active">
+  <div class="card">
+    <div class="card-title">🌍 Location Context <span class="data-note">🔍 Powers live search</span></div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Country</label>
+        <select id="country">
+          <option value="Nigeria">🇳🇬 Nigeria</option>
+          <option value="Ghana">🇬🇭 Ghana</option>
+          <option value="Kenya">🇰🇪 Kenya</option>
+          <option value="South Africa">🇿🇦 South Africa</option>
+          <option value="Uganda">🇺🇬 Uganda</option>
+          <option value="Tanzania">🇹🇿 Tanzania</option>
+          <option value="Cameroon">🇨🇲 Cameroon</option>
+          <option value="Ethiopia">🇪🇹 Ethiopia</option>
+          <option value="United States">🇺🇸 United States</option>
+          <option value="United Kingdom">🇬🇧 United Kingdom</option>
+          <option value="Canada">🇨🇦 Canada</option>
+          <option value="Australia">🇦🇺 Australia</option>
+          <option value="India">🇮🇳 India</option>
+          <option value="Philippines">🇵🇭 Philippines</option>
+          <option value="Brazil">🇧🇷 Brazil</option>
+          <option value="Mexico">🇲🇽 Mexico</option>
+          <option value="Germany">🇩🇪 Germany</option>
+          <option value="France">🇫🇷 France</option>
+          <option value="Singapore">🇸🇬 Singapore</option>
+          <option value="UAE">🇦🇪 UAE</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>City (be specific)</label>
+        <input type="text" id="city" placeholder="e.g. Lagos, Accra, Nairobi...">
+      </div>
+      <div class="form-group">
+        <label>Standard of Living</label>
+        <select id="standard">
+          <option value="basic">Basic / Minimal</option>
+          <option value="moderate" selected>Moderate / Average</option>
+          <option value="comfortable">Comfortable</option>
+          <option value="affluent">Affluent</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">👶 Children</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Number of Children</label>
+        <select id="numChildren" onchange="toggleAges()">
+          <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Child 1 Age Group</label>
+        <select id="age1">
+          <option value="infant">Infant (0–1)</option>
+          <option value="toddler">Toddler (2–4)</option>
+          <option value="child" selected>Child (5–11)</option>
+          <option value="teen">Teenager (12–17)</option>
+        </select>
+      </div>
+      <div class="form-group" id="g-age2" style="display:none">
+        <label>Child 2 Age Group</label>
+        <select id="age2">
+          <option value="infant">Infant (0–1)</option><option value="toddler">Toddler (2–4)</option>
+          <option value="child" selected>Child (5–11)</option><option value="teen">Teenager (12–17)</option>
+        </select>
+      </div>
+      <div class="form-group" id="g-age3" style="display:none">
+        <label>Child 3 Age Group</label>
+        <select id="age3">
+          <option value="infant">Infant (0–1)</option><option value="toddler">Toddler (2–4)</option>
+          <option value="child">Child (5–11)</option><option value="teen">Teenager (12–17)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">⚖️ Custody & Finances</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Your Custody Share</label>
+        <select id="custody">
+          <option value="0">No physical custody (0%)</option>
+          <option value="14">Every other weekend (~14%)</option>
+          <option value="20">Alternating (~20%)</option>
+          <option value="35">Extended visitation (~35%)</option>
+          <option value="50">50/50 shared</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Your Monthly Income</label>
+        <input type="number" id="income" placeholder="e.g. 500000">
+      </div>
+      <div class="form-group">
+        <label>Income Currency</label>
+        <input type="text" id="incomeCurrency" placeholder="e.g. NGN, USD, GBP">
+      </div>
+    </div>
+  </div>
+
+  <div class="search-status" id="search-status">
+    <div class="search-label"><div class="live-dot" style="background:#4ade80;"></div> Researching live data...</div>
+    <ul class="search-steps" id="search-steps"></ul>
+  </div>
+
+  <div class="sources-strip" id="sources-strip">
+    <strong>✅ Data sourced from live web research</strong>
+    <div id="sources-summary" style="color:var(--muted);line-height:1.6;margin-top:0.3rem;"></div>
+    <div class="source-tags" id="source-tags"></div>
+    <div class="confidence-bar"><div class="confidence-fill" id="confidence-fill" style="width:0%"></div></div>
+    <div style="font-size:0.68rem;color:var(--muted);margin-top:0.3rem;" id="confidence-label"></div>
+  </div>
+
+  <div class="card" id="results-card" style="display:none">
+    <div class="card-title">📋 Monthly Cost Estimate
+      <span id="last-updated" style="font-size:0.7rem;font-weight:400;color:var(--muted);margin-left:auto;"></span>
+    </div>
+    <div class="results-grid">
+      <div class="result-card accent"><div class="result-label">Total Monthly Child Cost</div><div class="result-value" id="r-total">—</div></div>
+      <div class="result-card blue"><div class="result-label">Your Estimated Share</div><div class="result-value" id="r-share">—</div></div>
+      <div class="result-card gold"><div class="result-label">% of Your Income</div><div class="result-value" id="r-pct">—</div></div>
+      <div class="result-card"><div class="result-label">Annual Estimate</div><div class="result-value" id="r-annual">—</div></div>
+    </div>
+    <div id="range-note" style="font-size:0.78rem;color:var(--muted);margin-bottom:1rem;padding:0.6rem 0.8rem;background:var(--warm);border-radius:8px;line-height:1.6;"></div>
+    <table class="breakdown">
+      <thead><tr><th>Category</th><th>Monthly Est.</th><th>Typical Range</th><th>Priority</th></tr></thead>
+      <tbody id="breakdown-body"></tbody>
+      <tfoot><tr><td><strong>Total (per child)</strong></td><td class="mono" id="foot-total"><strong>—</strong></td><td></td><td></td></tr></tfoot>
+    </table>
+    <div class="divider"></div>
+    <div id="ai-notes" style="font-size:0.82rem;color:var(--muted);line-height:1.7;"></div>
+  </div>
+
+  <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+    <button class="btn btn-live btn-block" id="live-btn" onclick="runLiveSearch()">🔍 Research Live Data for My Location</button>
+    <button class="btn btn-outline" onclick="resetResults()">↺ Reset</button>
+  </div>
+
+  <div class="disclaimer">
+    <strong>⚠️ Educational Estimates Only</strong>
+    Figures are AI-generated estimates based on live web research. Not legal determinations. Child support is set by courts using jurisdiction-specific formulas. Consult a licensed family law attorney for advice specific to your situation.
+  </div>
+</div>
+
+<!-- SHIELD -->
+<div id="panel-shield" class="panel">
+  <div class="section-header">
+    <h2>Alienation Shield</h2><div class="line"></div>
+    <span class="info-chip">🛡️ Protective Strategies</span>
+  </div>
+  <div class="card" style="background:linear-gradient(135deg,#0f1923,#1a2e3e);color:var(--paper);">
+    <div style="font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:700;margin-bottom:0.6rem;color:var(--gold);">You Are Not Alone</div>
+    <p style="line-height:1.75;font-size:0.875rem;opacity:0.82;">Parental alienation is one of the most painful aspects of high-conflict separation. These strategies are used by fathers worldwide to protect their relationship with their children — legally, practically, and emotionally.</p>
+  </div>
+
+  <div class="strategy-card open" onclick="toggleStrategy(this)">
+    <div class="strategy-header"><div class="strategy-icon" style="background:#dbeafe;">📱</div><div class="strategy-title">Centralize All Communication to One Platform</div><span class="strategy-chevron">▼</span></div>
+    <div class="strategy-body">
+      <p>Moving everything to a dedicated co-parenting app creates a legally admissible, tamper-proof record — and removes the ability to claim messages were "never received."</p>
+      <ul class="tip-list">
+        <li><strong>OurFamilyWizard</strong> — Court-admissible logs, read receipts, shared calendar. Widely accepted in US, UK, Canada, Australia.</li>
+        <li><strong>TalkingParents</strong> — Free tier available. Every message timestamped and uneditable. Excellent for documenting ignored communication.</li>
+        <li><strong>Fayr</strong> — Combines messaging with expense tracking.</li>
+        <li><strong>2houses</strong> — Popular in Europe and Africa. Works well internationally.</li>
+        <li>Send one firm, neutral message: "Going forward, all co-parenting communication will be through [App]. I've sent an invite."</li>
+        <li>If they refuse to join, document that refusal — it demonstrates your good-faith effort to the court.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="strategy-card" onclick="toggleStrategy(this)">
+    <div class="strategy-header"><div class="strategy-icon" style="background:#dcfce7;">📷</div><div class="strategy-title">Document Everything — Systematically</div><span class="strategy-chevron">▼</span></div>
+    <div class="strategy-body">
+      <p>Courts respond to evidence. Consistent, calm documentation is your most powerful long-term tool.</p>
+      <ul class="tip-list">
+        <li>Keep a dated log of every missed visit, denied call, or interference incident. <strong>DadDiaries</strong> or a timestamped Google Sheet work well.</li>
+        <li>Screenshot and back up every relevant message before blocking can occur. Store copies in cloud storage.</li>
+        <li>After each call with your child, note the duration, content, and anything notable.</li>
+        <li>Take photos during your parenting time — timestamped proof you were engaged and present.</li>
+        <li>Request to be added to all school, medical, and activity communication lists independently.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="strategy-card" onclick="toggleStrategy(this)">
+    <div class="strategy-header"><div class="strategy-icon" style="background:#fef3c7;">⚖️</div><div class="strategy-title">Know Your Legal Rights — Then Use Them</div><span class="strategy-chevron">▼</span></div>
+    <div class="strategy-body">
+      <p>In most jurisdictions, a father with a parenting order has enforceable rights. Ignorance of those rights is what allows alienation to persist.</p>
+      <ul class="tip-list">
+        <li>File a contempt motion promptly if court-ordered parenting time is withheld. Waiting too long weakens your position.</li>
+        <li>Request a <strong>Parenting Coordinator</strong> in high-conflict situations — a neutral arbiter who reduces direct hostile contact.</li>
+        <li>Ask about a <strong>right of first refusal</strong> clause — if the custodial parent needs childcare, you have first option.</li>
+        <li>Request school and medical records independently — both parents typically have this right regardless of custody split.</li>
+        <li>Consider a <strong>Guardian ad Litem</strong> if alienation is severe — an independent advocate for the child's interests.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="strategy-card" onclick="toggleStrategy(this)">
+    <div class="strategy-header"><div class="strategy-icon" style="background:#fce7f3;">❤️</div><div class="strategy-title">Maintain Consistent, Low-Drama Contact</div><span class="strategy-chevron">▼</span></div>
+    <div class="strategy-body">
+      <p>Children remember consistency above all else. Even when calls are short and visits disrupted — keep showing up.</p>
+      <ul class="tip-list">
+        <li>Set a fixed "dad calls" schedule — same day, same time. Make it a ritual they can count on.</li>
+        <li>Send physical mail — letters, drawings, small gifts. Physical objects cannot be blocked or muted.</li>
+        <li>Never badmouth the other parent to your children, even when provoked. Your restraint protects them and demonstrates your character to courts.</li>
+        <li>Stay connected to their school, coaches, and friends' parents independently — build your own presence in their community.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="strategy-card" onclick="toggleStrategy(this)">
+    <div class="strategy-header"><div class="strategy-icon" style="background:#ede9fe;">🧠</div><div class="strategy-title">Protect Your Own Mental Health</div><span class="strategy-chevron">▼</span></div>
+    <div class="strategy-body">
+      <p>You cannot parent effectively from a place of constant crisis. Caring for your wellbeing is the foundation of being the stable father your children need.</p>
+      <ul class="tip-list">
+        <li>Find a therapist familiar with high-conflict co-parenting — a distinct specialty from general counseling.</li>
+        <li>Join a fathers' support group: <strong>Fathers4Justice</strong> (UK), <strong>DadsDivorce</strong> (US), <strong>Families Need Fathers</strong>.</li>
+        <li>Set firm limits on when you check co-parenting messages — not at night, not before important activities.</li>
+        <li>Keep a personal emotional journal, separate from your legal documentation log.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="disclaimer">
+    <strong>💙 On These Strategies</strong>
+    Practical tools, not guarantees. Every situation is unique. The goal is always the wellbeing of your children — not victory over the other parent.
+  </div>
+</div>
+
+<!-- ADVISOR -->
+<div id="panel-advisor" class="panel">
+  <div class="section-header">
+    <h2>AI Advisor</h2><div class="line"></div>
+    <span class="info-chip">💬 Confidential Space</span>
+  </div>
+  <div class="card" style="background:linear-gradient(135deg,#0f1923,#1a2e3e);color:var(--paper);margin-bottom:1.25rem;">
+    <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;margin-bottom:0.5rem;color:var(--gold);">A Safe Space to Think Out Loud</div>
+    <p style="font-size:0.855rem;opacity:0.8;line-height:1.75;">Share what's happening in your co-parenting situation. Ask about communication strategies, legal concepts, finances, how to talk to your kids, or anything else weighing on you.</p>
+  </div>
+  <div class="chat-area">
+    <div class="chat-messages" id="chat-messages">
+      <div class="msg assistant">
+        👋 Hello. I'm here as a thinking partner for fathers navigating separation.<br><br>
+        Ask about <strong>communication strategies</strong>, <strong>co-parenting apps</strong>, <strong>financial planning</strong>, <strong>protecting your bond</strong> with your children, <strong>legal concepts</strong>, or just talk through a difficult situation.<br><br>
+        What's on your mind?
+      </div>
+    </div>
+    <div class="chat-input-row">
+      <input type="text" id="chat-input" placeholder="Type your question or situation..." onkeydown="if(event.key==='Enter')sendMessage()">
+      <button class="btn btn-secondary" onclick="sendMessage()">Send →</button>
+    </div>
+  </div>
+  <div class="disclaimer" style="margin-top:1rem;">
+    <strong>🔒 About This Advisor</strong>
+    Educational information and emotional support only — not legal, financial, or psychological advice. For serious matters, consult a licensed family law attorney or qualified therapist.
+  </div>
+</div>
+
+</main>
+
+<script>
+  // ─────────────────────────────────────────────────────────────────────
+  // All API calls go through /api/claude — a Vercel serverless function
+  // that reads ANTHROPIC_API_KEY from environment variables server-side.
+  // The key never appears in this file or in the browser.
+  // ─────────────────────────────────────────────────────────────────────
+  const API_ENDPOINT = '/api/claude';
+
+  async function callClaude(payload) {
+    const res = await fetch(API_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `API error ${res.status}`);
+    }
+    return res.json();
+  }
+
+  // ── UI helpers ─────────────────────────────────────────────────────
+  function switchTab(name) {
+    ['calculator','shield','advisor'].forEach(t => {
+      document.getElementById('panel-'+t).classList.remove('active');
+      document.getElementById('tab-'+t).classList.remove('active');
+    });
+    document.getElementById('panel-'+name).classList.add('active');
+    document.getElementById('tab-'+name).classList.add('active');
+  }
+
+  function toggleAges() {
+    const n = parseInt(document.getElementById('numChildren').value);
+    document.getElementById('g-age2').style.display = n >= 2 ? 'flex' : 'none';
+    document.getElementById('g-age3').style.display = n >= 3 ? 'flex' : 'none';
+  }
+
+  function toggleStrategy(el) { el.classList.toggle('open'); }
+
+  function resetResults() {
+    document.getElementById('results-card').style.display = 'none';
+    document.getElementById('search-status').classList.remove('visible');
+    document.getElementById('sources-strip').classList.remove('visible');
+    const btn = document.getElementById('live-btn');
+    btn.disabled = false;
+    btn.textContent = '🔍 Research Live Data for My Location';
+  }
+
+  function setStep(idx, status) {
+    const els = document.getElementById('search-steps').children;
+    if (els[idx]) {
+      els[idx].className = 'search-step ' + status;
+      els[idx].querySelector('.step-icon').textContent =
+        status === 'done' ? '✅' : status === 'active' ? '⏳' : '○';
+    }
+  }
+
+  function buildSteps(labels) {
+    const c = document.getElementById('search-steps');
+    c.innerHTML = '';
+    labels.forEach(l => {
+      const li = document.createElement('li');
+      li.className = 'search-step';
+      li.innerHTML = `<span class="step-icon">○</span>${l}`;
+      c.appendChild(li);
+    });
+  }
+
+  function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  // ── Live research ──────────────────────────────────────────────────
+  async function runLiveSearch() {
+    const country   = document.getElementById('country').value;
+    const city      = document.getElementById('city').value.trim() || 'the capital city';
+    const standard  = document.getElementById('standard').value;
+    const numKids   = parseInt(document.getElementById('numChildren').value);
+    const ages      = ['age1','age2','age3'].slice(0, numKids).map(id => document.getElementById(id).value);
+    const custody   = parseInt(document.getElementById('custody').value);
+    const income    = document.getElementById('income').value;
+    const incomeCur = document.getElementById('incomeCurrency').value || '';
+
+    const btn = document.getElementById('live-btn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Researching...';
+
+    const statusEl = document.getElementById('search-status');
+    statusEl.classList.add('visible');
+    document.getElementById('results-card').style.display = 'none';
+    document.getElementById('sources-strip').classList.remove('visible');
+
+    const ageLabels = { infant:'infant (0–1)', toddler:'toddler (2–4)', child:'school-age child (5–11)', teen:'teenager (12–17)' };
+    const stdLabels = { basic:'basic/minimal', moderate:'moderate/average', comfortable:'comfortable/middle-class', affluent:'affluent/upper-middle' };
+    const childDesc = ages.map((a,i) => `Child ${i+1}: ${ageLabels[a]}`).join('; ');
+
+    const stepLabels = [
+      `Searching cost-of-living data — ${city}, ${country}`,
+      `Looking up childcare & school fees`,
+      `Researching food, clothing & healthcare costs`,
+      `Checking housing & transport expenses`,
+      `Cross-referencing exchange rates & inflation`,
+      `Synthesising findings into your breakdown`
+    ];
+    buildSteps(stepLabels);
+
+    let si = 0;
+    const stepTimer = setInterval(() => {
+      if (si > 0) setStep(si-1, 'done');
+      if (si < stepLabels.length) { setStep(si, 'active'); si++; }
+    }, 1800);
+
+    const prompt = `You are a child support financial research assistant with web search capability. Search the web thoroughly for current data, then return a structured JSON breakdown.
+
+SITUATION:
+- Location: ${city}, ${country}
+- Children: ${childDesc}
+- Standard of living: ${stdLabels[standard]}
+- Father's custody share: ${custody}%
+- Father's income: ${income ? income + ' ' + incomeCur + '/month' : 'not provided'}
+
+SEARCH INSTRUCTIONS:
+Run multiple web searches to find CURRENT (2024-2025) real-world costs specifically for ${city}, ${country}. Search sources like Numbeo, World Bank, local news, government statistics bureaus, NGO reports, and cost-of-living databases. Search for:
+1. "childcare costs ${city} ${country} 2024 2025"
+2. "school fees ${city} ${country} monthly average"
+3. "food prices family ${country} 2025"
+4. "children clothing cost ${country}"
+5. "healthcare costs children ${country} 2024"
+6. "rent housing ${city} ${country} 2025"
+7. "transport costs ${city} ${country}"
+8. "cost of living ${city} ${country} 2025"
+9. "child support guidelines ${country}"
+10. "${country} currency inflation 2025"
+
+After searching, return ONLY a valid JSON object (no markdown, no backticks, no explanation outside the JSON):
+
+{
+  "currency": "local currency code",
+  "currency_symbol": "symbol",
+  "location_summary": "one sentence on economic context of this city/country",
+  "data_confidence": 75,
+  "sources_used": ["domain or source name 1", "source 2"],
+  "sources_summary": "2-3 sentences on what sources were found and how current/reliable",
+  "inflation_note": "brief note on current inflation or economic conditions",
+  "categories": [
+    {"key":"food","label":"Food & Nutrition","monthly_mid":0,"monthly_low":0,"monthly_high":0,"priority":"high","frequency":"Daily","notes":"brief source note"},
+    {"key":"clothing","label":"Clothing & Shoes","monthly_mid":0,"monthly_low":0,"monthly_high":0,"priority":"mid","frequency":"Monthly avg","notes":""},
+    {"key":"healthcare","label":"Healthcare & Medical","monthly_mid":0,"monthly_low":0,"monthly_high":0,"priority":"high","frequency":"As needed","notes":""},
+    {"key":"childcare","label":"Childcare / School Fees","monthly_mid":0,"monthly_low":0,"monthly_high":0,"priority":"high","frequency":"Monthly","notes":""},
+    {"key":"transport","label":"Transportation","monthly_mid":0,"monthly_low":0,"monthly_high":0,"priority":"mid","frequency":"Daily","notes":""},
+    {"key":"recreation","label":"Recreation & Activities","monthly_mid":0,"monthly_low":0,"monthly_high":0,"priority":"low","frequency":"Weekly","notes":""},
+    {"key":"personal","label":"Personal Care & Hygiene","monthly_mid":0,"monthly_low":0,"monthly_high":0,"priority":"mid","frequency":"Monthly","notes":""},
+    {"key":"housing","label":"Housing Contribution","monthly_mid":0,"monthly_low":0,"monthly_high":0,"priority":"high","frequency":"Monthly","notes":""},
+    {"key":"misc","label":"Miscellaneous","monthly_mid":0,"monthly_low":0,"monthly_high":0,"priority":"low","frequency":"Monthly","notes":""}
+  ],
+  "multi_child_note": "note on cost scaling for multiple children",
+  "legal_context": "brief note on child support legal framework in this country if found",
+  "ai_notes": "2-3 sentences of important caveats the father should know"
+}
+
+All monetary values must be in the LOCAL currency of ${country}. Adjust all figures for the ${stdLabels[standard]} standard of living, prices specific to ${city}, ages: ${childDesc}, and current economic conditions.
+
+Return ONLY the JSON object.`;
+
+    try {
+      const data = await callClaude({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4000,
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+        messages: [{ role: 'user', content: prompt }]
+      });
+
+      clearInterval(stepTimer);
+      stepLabels.forEach((_,i) => setStep(i, 'done'));
+
+      const textBlocks = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
+      let parsed;
+      try {
+        const clean = textBlocks.replace(/```json|```/g,'').trim();
+        const match = clean.match(/\{[\s\S]*\}/);
+        if (!match) throw new Error('No JSON in response');
+        parsed = JSON.parse(match[0]);
+      } catch(e) {
+        throw new Error('Could not parse research data. Please try again.');
+      }
+
+      await delay(400);
+      statusEl.classList.remove('visible');
+
+      const sourcesEl = document.getElementById('sources-strip');
+      sourcesEl.classList.add('visible');
+      document.getElementById('sources-summary').textContent = parsed.sources_summary || '';
+      document.getElementById('source-tags').innerHTML =
+        (parsed.sources_used || []).map(s => `<span class="source-tag">${s}</span>`).join('');
+      const conf = parsed.data_confidence || 65;
+      document.getElementById('confidence-fill').style.width = conf + '%';
+      document.getElementById('confidence-label').textContent =
+        `Data confidence: ${conf}% — ${conf >= 80 ? 'Good coverage found' : conf >= 60 ? 'Moderate coverage, ranges may vary' : 'Limited data, treat as rough estimate'}`;
+
+      renderResults(parsed, numKids, custody, income);
+      document.getElementById('last-updated').textContent = 'Researched: ' + new Date().toLocaleDateString();
+      btn.textContent = '🔄 Refresh Research';
+      btn.disabled = false;
+
+    } catch(err) {
+      clearInterval(stepTimer);
+      statusEl.classList.remove('visible');
+      btn.disabled = false;
+      btn.textContent = '🔍 Research Live Data for My Location';
+      alert('Research error: ' + (err.message || 'Please try again.'));
+    }
+  }
+
+  function renderResults(d, numKids, custodyPct, income) {
+    const sym = d.currency_symbol || '';
+    const cats = d.categories || [];
+    const kidMult = [1, 0.75, 0.6];
+    let single = 0;
+    cats.forEach(c => { single += (c.monthly_mid || 0); });
+    let grand = 0;
+    for (let i = 0; i < numKids; i++) grand += single * (kidMult[i] || 0.5);
+    const share = grand * (1 - custodyPct / 100);
+    const annual = share * 12;
+
+    function fmt(v) {
+      if (!v && v !== 0) return '—';
+      if (v >= 1000000000) return sym + (v/1000000000).toFixed(1) + 'B';
+      if (v >= 1000000)    return sym + (v/1000000).toFixed(2) + 'M';
+      if (v >= 100000)     return sym + Math.round(v/1000) + 'k';
+      if (v >= 10000)      return sym + Math.round(v).toLocaleString();
+      if (v >= 100)        return sym + Math.round(v);
+      return sym + v.toFixed(2);
+    }
+
+    document.getElementById('r-total').textContent  = fmt(grand);
+    document.getElementById('r-share').textContent  = fmt(share);
+    document.getElementById('r-annual').textContent = fmt(annual);
+    document.getElementById('r-pct').textContent =
+      (income && parseFloat(income) > 0) ? (share / parseFloat(income) * 100).toFixed(1) + '%' : '—';
+
+    document.getElementById('range-note').textContent =
+      (d.location_summary || '') + (d.inflation_note ? ' ' + d.inflation_note : '');
+
+    const pBadge = { high:'badge-high', mid:'badge-mid', low:'badge-low' };
+    const pLabel = { high:'Essential', mid:'Important', low:'Optional' };
+    const tbody = document.getElementById('breakdown-body');
+    tbody.innerHTML = '';
+    cats.forEach(c => {
+      const note  = c.notes ? `<span class="range-note">${c.notes}</span>` : '';
+      const range = (c.monthly_low && c.monthly_high) ? `${fmt(c.monthly_low)} – ${fmt(c.monthly_high)}` : '—';
+      const p = c.priority || 'mid';
+      tbody.innerHTML += `<tr>
+        <td>${c.label}${note}</td>
+        <td class="mono">${fmt(c.monthly_mid)}</td>
+        <td style="color:var(--muted);font-size:0.78rem;">${range}</td>
+        <td><span class="badge ${pBadge[p]||'badge-mid'}">${pLabel[p]||'—'}</span></td>
+      </tr>`;
+    });
+    document.getElementById('foot-total').innerHTML = `<strong>${fmt(single)}</strong>`;
+
+    let notes = d.ai_notes || '';
+    if (d.legal_context) notes += '<br><br><em>' + d.legal_context + '</em>';
+    if (d.multi_child_note && numKids > 1) notes += '<br><br>' + d.multi_child_note;
+    document.getElementById('ai-notes').innerHTML = notes;
+
+    document.getElementById('results-card').style.display = 'block';
+    document.getElementById('results-card').scrollIntoView({ behavior:'smooth', block:'start' });
+  }
+
+  // ── Advisor chat ───────────────────────────────────────────────────
+  const SYS = `You are a knowledgeable, warm, and practical advisor for fathers navigating separation, child support, and co-parenting challenges. You're a supportive thinking partner — like a wise, empathetic friend who understands family law concepts, co-parenting strategy, child psychology, and financial planning.
+
+Principles:
+- Lead with empathy. These situations are deeply painful.
+- Be practical and actionable. Give concrete tips, not vague platitudes.
+- For legal matters: provide educational context but always recommend consulting a licensed family law attorney.
+- When discussing alienation: validate the father's experience while keeping the child's wellbeing central.
+- Recommend co-parenting apps (OurFamilyWizard, TalkingParents, Fayr, 2houses) when communication issues arise.
+- Ask about location when jurisdiction matters.
+- Never disparage the other parent. Focus on what the father controls.
+- Keep responses conversational — short paragraphs, occasional bullet points.
+- Acknowledge feelings first if someone seems distressed.`;
+
+  let chatHistory = [];
+
+  async function sendMessage() {
+    const input = document.getElementById('chat-input');
+    const msg = input.value.trim();
+    if (!msg) return;
+    input.value = '';
+    appendMsg(msg, 'user');
+    chatHistory.push({ role:'user', content:msg });
+    const lid = appendLoading();
+    try {
+      const data = await callClaude({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: SYS,
+        messages: chatHistory
+      });
+      const reply = (data.content||[]).map(b=>b.text||'').join('');
+      removeLoading(lid);
+      appendMsg(reply, 'assistant');
+      chatHistory.push({ role:'assistant', content:reply });
+    } catch(e) {
+      removeLoading(lid);
+      appendMsg('Sorry, connection issue. Please try again.', 'assistant');
+    }
+  }
+
+  function appendMsg(text, role) {
+    const c = document.getElementById('chat-messages');
+    const d = document.createElement('div');
+    d.className = 'msg ' + role;
+    d.innerHTML = text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+    c.appendChild(d);
+    c.scrollTop = c.scrollHeight;
+  }
+
+  function appendLoading() {
+    const c = document.getElementById('chat-messages');
+    const d = document.createElement('div');
+    d.className = 'msg assistant';
+    d.id = 'ld-' + Date.now();
+    d.innerHTML = '<div class="dots"><span></span><span></span><span></span></div>';
+    c.appendChild(d); c.scrollTop = c.scrollHeight;
+    return d.id;
+  }
+
+  function removeLoading(id) {
+    const el = document.getElementById(id);
+    if (el) el.remove();
+  }
+</script>
+</body>
+</html>
