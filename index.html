@@ -553,17 +553,11 @@ SITUATION:
 - Father's income: ${income ? income + ' ' + incomeCur + '/month' : 'not provided'}
 
 SEARCH INSTRUCTIONS:
-Run multiple web searches to find CURRENT (2024-2025) real-world costs specifically for ${city}, ${country}. Search sources like Numbeo, World Bank, local news, government statistics bureaus, NGO reports, and cost-of-living databases. Search for:
-1. "childcare costs ${city} ${country} 2024 2025"
-2. "school fees ${city} ${country} monthly average"
-3. "food prices family ${country} 2025"
-4. "children clothing cost ${country}"
-5. "healthcare costs children ${country} 2024"
-6. "rent housing ${city} ${country} 2025"
-7. "transport costs ${city} ${country}"
-8. "cost of living ${city} ${country} 2025"
-9. "child support guidelines ${country}"
-10. "${country} currency inflation 2025"
+Run 3-5 focused web searches to find CURRENT (2024-2025) costs for ${city}, ${country}. Prioritise Numbeo, local news, and government statistics. Search for:
+1. "cost of living ${city} ${country} 2025 childcare school food"
+2. "child expenses monthly ${country} 2024 2025"
+3. "housing rent transport ${city} ${country} 2025"
+4. "child support ${country} guidelines average"
 
 After searching, return ONLY a valid JSON object (no markdown, no backticks, no explanation outside the JSON):
 
@@ -598,7 +592,7 @@ Return ONLY the JSON object.`;
     try {
       const data = await callClaude({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 4000,
+        max_tokens: 2000,
         tools: [{ type: 'web_search_20250305', name: 'web_search' }],
         messages: [{ role: 'user', content: prompt }]
       });
