@@ -32,4 +32,4 @@ module.exports = async function handler(req, res) {
   } catch (error) {
     return res.status(500).json({ error: 'Proxy error: ' + error.message });
   }
-}
+};
