@@ -437,12 +437,11 @@
 
     <!-- Father's own costs toggle -->
     <div style="margin-top:1.25rem;">
-      <label class="father-costs-toggle" for="showFatherCosts">
-        <input type="checkbox" id="showFatherCosts" onchange="toggleFatherCosts()">
+      <div class="father-costs-toggle" onclick="document.getElementById('showFatherCosts').click()">
+        <input type="checkbox" id="showFatherCosts" onchange="toggleFatherCosts()" onclick="event.stopPropagation()">
         <span>Include my own monthly living costs (recommended for accuracy)</span>
-      </label>
-    </div>
-    <div class="father-costs-section" id="fatherCostsSection" style="display:none;">
+      </div>
+      <div id="fatherCostsSection" style="display:none; margin-top:1rem; padding-top:1rem; border-top:1px dashed var(--border);">
         <div class="form-grid">
           <div class="form-group">
             <label>Your Rent / Housing</label>
@@ -469,6 +468,7 @@
             <input type="number" id="fc-other" placeholder="0" oninput="updateDisposable()">
           </div>
         </div>
+      </div>
     </div>
   </div>
 
