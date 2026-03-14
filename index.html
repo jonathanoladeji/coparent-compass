@@ -366,6 +366,56 @@
 <!-- ══ SHIELD ══ -->
 <div id="panel-shield" class="panel">
   <div class="section-header"><h2>Alienation Shield</h2><div class="line"></div><span class="info-chip">🛡️ Protective Strategies</span></div>
+
+  <!-- Situational intake -->
+  <div class="card" id="shield-intake">
+    <div class="card-title">🎯 Your Situation</div>
+    <div class="card-subtitle">Answer these to get the most relevant strategies highlighted for your case.</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Communication pattern with ex</label>
+        <select id="si-comms" onchange="updateShieldRecommendations()">
+          <option value="">— Select —</option>
+          <option value="blocked">Blocks / mutes me regularly</option>
+          <option value="ignores">Ignores messages for days</option>
+          <option value="hostile">Responds but hostile/abusive</option>
+          <option value="ok">Mostly communicates, some friction</option>
+          <option value="good">Communicates reasonably well</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Denied parenting time?</label>
+        <select id="si-denial" onchange="updateShieldRecommendations()">
+          <option value="">— Select —</option>
+          <option value="often">Often — more than once a month</option>
+          <option value="sometimes">Sometimes — a few times</option>
+          <option value="once">Once or twice total</option>
+          <option value="never">Not yet / not applicable</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Child's attitude toward you</label>
+        <select id="si-child" onchange="updateShieldRecommendations()">
+          <option value="">— Select —</option>
+          <option value="alienated">Seems coached / says hurtful things</option>
+          <option value="reluctant">Sometimes reluctant to visit</option>
+          <option value="normal">Normal — loves time with me</option>
+          <option value="unsure">Too young to tell / unsure</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Do you have a court order?</label>
+        <select id="si-order" onchange="updateShieldRecommendations()">
+          <option value="">— Select —</option>
+          <option value="yes">Yes — parenting plan in place</option>
+          <option value="pending">In progress / pending</option>
+          <option value="no">No formal order yet</option>
+        </select>
+      </div>
+    </div>
+    <div id="shield-priority-note" style="display:none;margin-top:1rem;padding:0.75rem 1rem;border-radius:8px;background:linear-gradient(135deg,#0f2a1a,#0f1923);color:#4ade80;font-size:0.82rem;line-height:1.65;"></div>
+  </div>
+
   <div class="card" style="background:linear-gradient(135deg,#0f1923,#1a2e3e);color:var(--paper);">
     <div style="font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:700;margin-bottom:0.6rem;color:var(--gold);">You Are Not Alone</div>
     <p style="line-height:1.75;font-size:0.875rem;opacity:0.82;">Parental alienation is one of the most painful aspects of high-conflict separation. These strategies are used by fathers worldwide to protect their relationship with their children — legally, practically, and emotionally.</p>
@@ -440,6 +490,53 @@
 <!-- ══ ADVISOR ══ -->
 <div id="panel-advisor" class="panel">
   <div class="section-header"><h2>AI Advisor</h2><div class="line"></div><span class="info-chip">💬 Confidential Space</span></div>
+
+  <!-- Context intake for advisor -->
+  <div class="card" id="advisor-intake">
+    <div class="card-title">📋 Tell Me About Your Situation</div>
+    <div class="card-subtitle">This helps the advisor give you relevant, personalised guidance rather than generic answers.</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>How long separated?</label>
+        <select id="ai-duration">
+          <option value="">— Select —</option>
+          <option value="fresh">Less than 6 months</option>
+          <option value="settling">6–18 months</option>
+          <option value="established">1–3 years</option>
+          <option value="longterm">3+ years</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Biggest challenge right now</label>
+        <select id="ai-challenge">
+          <option value="">— Select —</option>
+          <option value="communication">Communication / being ignored</option>
+          <option value="access">Getting access to my child</option>
+          <option value="finances">Child support / finances</option>
+          <option value="alienation">Child being turned against me</option>
+          <option value="legal">Legal process / court</option>
+          <option value="emotional">My own emotional wellbeing</option>
+          <option value="coparenting">General co-parenting conflict</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Child's age group</label>
+        <select id="ai-childage">
+          <option value="">— Select —</option>
+          <option value="infant">Infant / toddler (0–4)</option>
+          <option value="child">Child (5–11)</option>
+          <option value="teen">Teenager (12–17)</option>
+          <option value="mixed">Multiple / mixed ages</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Your country / region</label>
+        <input type="text" id="ai-country" placeholder="e.g. Nigeria, South Africa, UK...">
+      </div>
+    </div>
+    <button class="btn btn-secondary" style="margin-top:1rem;width:100%;" onclick="startAdvisorWithContext()">Start Conversation with This Context →</button>
+  </div>
+
   <div class="card" style="background:linear-gradient(135deg,#0f1923,#1a2e3e);color:var(--paper);margin-bottom:1.25rem;">
     <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;margin-bottom:0.5rem;color:var(--gold);">A Safe Space to Think Out Loud</div>
     <p style="font-size:0.855rem;opacity:0.8;line-height:1.75;">Ask about communication strategies, legal concepts, finances, how to talk to your kids, or anything else weighing on you. No judgment here.</p>
@@ -609,6 +706,9 @@
   }
 
   function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  // Result cache — avoids re-searching same location+ages
+  let _cache = {};
 
   // ── Live research ───────────────────────────────────────────────────
   async function runLiveSearch() {
@@ -817,6 +917,97 @@ Set applies:false and values to 0 for N/A categories per age rules above.`;
   }
 
   // ── Advisor chat ────────────────────────────────────────────────────
+  // ── Shield recommendation logic ──────────────────────────────────────
+  function updateShieldRecommendations() {
+    const comms   = document.getElementById('si-comms').value;
+    const denial  = document.getElementById('si-denial').value;
+    const child   = document.getElementById('si-child').value;
+    const order   = document.getElementById('si-order').value;
+    const note    = document.getElementById('shield-priority-note');
+
+    if (!comms && !denial && !child && !order) { note.style.display='none'; return; }
+
+    const tips = [];
+
+    if (comms === 'blocked' || comms === 'ignores') {
+      tips.push('⚡ <strong>Priority:</strong> Move all communication to TalkingParents or OurFamilyWizard immediately — blocking becomes legally documented evidence when on a co-parenting platform.');
+    }
+    if (comms === 'hostile') {
+      tips.push('📝 Screenshot and archive every hostile message. Courts distinguish between normal conflict and a pattern of harassment.');
+    }
+    if (denial === 'often' || denial === 'sometimes') {
+      tips.push('⚖️ You have grounds for a contempt application. Start a dated denial log now — note date, time, what was said, and any witnesses.');
+    }
+    if (child === 'alienated') {
+      tips.push('❤️ Never react to coached statements with anger. Validate feelings without probing: "That sounds hard, I love you." Consistency over time is your best tool.');
+      tips.push('🧠 Consider requesting a child psychologist assessment through the court — documented alienation behaviours strengthen your legal position significantly.');
+    }
+    if (order === 'no') {
+      tips.push('📋 Without a court order, enforcement is very difficult. Getting a formal parenting plan filed is the single most important legal step you can take right now.');
+    }
+    if (order === 'yes' && denial === 'often') {
+      tips.push('🔴 You have a court order being violated. File for contempt — most family courts take repeated violations seriously, especially with documented evidence.');
+    }
+    if (tips.length === 0) {
+      tips.push('✅ Your situation sounds relatively stable. Focus on consistency, documentation as a precaution, and maintaining low-conflict communication.');
+    }
+
+    note.style.display = 'block';
+    note.innerHTML = tips.join('<br><br>');
+  }
+
+  // ── Advisor context injection ─────────────────────────────────────────
+  function startAdvisorWithContext() {
+    const duration  = document.getElementById('ai-duration');
+    const challenge = document.getElementById('ai-challenge');
+    const childage  = document.getElementById('ai-childage');
+    const country   = document.getElementById('ai-country');
+
+    const dLabel = duration.options[duration.selectedIndex].text;
+    const cLabel = challenge.options[challenge.selectedIndex].text;
+    const aLabel = childage.options[childage.selectedIndex].text;
+    const loc    = country.value.trim();
+
+    const parts = [];
+    if (duration.value)  parts.push('separated for ' + dLabel.toLowerCase());
+    if (challenge.value) parts.push('main challenge: ' + cLabel.toLowerCase());
+    if (childage.value)  parts.push('child age: ' + aLabel.toLowerCase());
+    if (loc)             parts.push('location: ' + loc);
+
+    if (parts.length === 0) {
+      // Just scroll to chat without context
+      document.getElementById('chat-messages').scrollIntoView({ behavior:'smooth' });
+      return;
+    }
+
+    // Inject a system-level context message as first user turn
+    const contextMsg = 'My situation: I am a father, ' + parts.join(', ') + '. Please keep this context in mind as we talk.';
+    chatHistory = []; // reset history for fresh context
+    chatHistory.push({ role:'user', content: contextMsg });
+
+    // Show confirmation in chat
+    const c = document.getElementById('chat-messages');
+    // Clear old messages except the greeting
+    while (c.children.length > 1) c.removeChild(c.lastChild);
+
+    const lid = appendLoading();
+    callClaude({
+      model:'claude-haiku-4-5-20251001',
+      max_tokens:600,
+      system:SYS,
+      messages:chatHistory
+    }).then(data => {
+      const reply = (data.content||[]).map(b=>b.text||'').join('');
+      removeLoading(lid);
+      appendMsg(reply, 'assistant');
+      chatHistory.push({ role:'assistant', content:reply });
+      document.getElementById('chat-messages').scrollIntoView({ behavior:'smooth', block:'start' });
+    }).catch(() => {
+      removeLoading(lid);
+      appendMsg('Sorry, connection issue. Please try again.', 'assistant');
+    });
+  }
+
   const SYS = `Warm, practical co-parenting advisor for separated fathers. Be empathetic first, then actionable. Keep responses concise — short paragraphs, bullet points only for tips. Recommend OurFamilyWizard/TalkingParents/Fayr for communication issues. Never disparage the other parent. For legal questions give educational context then say consult a family law attorney. Ask about location when jurisdiction matters. Be aware of African/Asian contexts: extended family norms, informal support, public schools and clinics.`;
 
   let chatHistory = [];
