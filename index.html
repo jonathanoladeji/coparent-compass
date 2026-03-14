@@ -437,11 +437,11 @@
 
     <!-- Father's own costs toggle -->
     <div style="margin-top:1.25rem;">
-      <div class="father-costs-toggle" onclick="document.getElementById('showFatherCosts').click()">
-        <input type="checkbox" id="showFatherCosts" onchange="toggleFatherCosts()" onclick="event.stopPropagation()">
-        <span>Include my own monthly living costs (recommended for accuracy)</span>
+      <div style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;margin-bottom:0.5rem;">
+        <input type="checkbox" id="showFatherCosts" style="width:16px;height:16px;cursor:pointer;accent-color:#2a7bc8;" onchange="toggleFatherCosts()">
+        <label for="showFatherCosts" style="font-size:0.85rem;font-weight:500;cursor:pointer;margin:0;">Include my own monthly living costs (recommended for accuracy)</label>
       </div>
-      <div id="fatherCostsSection" style="display:none; margin-top:1rem; padding-top:1rem; border-top:1px dashed var(--border);">
+      <div id="fatherCostsSection" style="display:none; margin-top:1rem; padding-top:1rem; border-top:1px dashed #d8ceb8;">
         <div class="form-grid">
           <div class="form-group">
             <label>Your Rent / Housing</label>
@@ -850,14 +850,8 @@
   }
 
   function toggleFatherCosts() {
-    const cb = document.getElementById('showFatherCosts');
-    const section = document.getElementById('fatherCostsSection');
-    if (cb.checked) {
-      section.style.display = 'block';
-      section.style.animation = 'fadeUp 0.25s ease';
-    } else {
-      section.style.display = 'none';
-    }
+    const checked = document.getElementById('showFatherCosts').checked;
+    document.getElementById('fatherCostsSection').style.display = checked ? 'block' : 'none';
     updateDisposable();
   }
 
