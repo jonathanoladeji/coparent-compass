@@ -135,6 +135,166 @@
   .info-chip{display:inline-flex;align-items:center;gap:0.3rem;background:var(--warm);border:1px solid var(--border);border-radius:20px;padding:0.2rem 0.6rem;font-size:0.72rem;font-weight:500;color:var(--muted);}
   .data-note{display:inline-flex;align-items:center;gap:0.3rem;font-size:0.72rem;color:var(--success);font-weight:500;margin-left:auto;}
   @media(max-width:600px){header{padding:0 1rem;}.logo{font-size:1.1rem;}nav button{font-size:0.68rem;padding:0.3rem 0.45rem;}.card{padding:1.1rem;}.tab-btn{font-size:0.72rem;padding:0.55rem 0.35rem;}}
+
+  /* ── PRINT STYLES ──────────────────────────────────────────────── */
+  .print-btn {
+    display:inline-flex;align-items:center;gap:0.4rem;
+    padding:0.6rem 1.1rem;border-radius:8px;border:1.5px solid var(--border);
+    background:#fff;color:var(--ink);cursor:pointer;
+    font-family:'DM Sans',sans-serif;font-size:0.8rem;font-weight:600;
+    transition:all 0.2s;margin-top:1rem;
+  }
+  .print-btn:hover{background:var(--warm);border-color:var(--ink);}
+
+  @media print {
+    body::before, header, .tabs-wrap, .hero, nav,
+    .live-badge, .btn-live, .btn-outline, .search-status,
+    .chat-input-row, .print-btn, #shield-intake,
+    #advisor-intake, .live-dot { display:none !important; }
+
+    body { background:#fff !important; color:#000 !important; font-size:11pt; }
+    main { padding:0 !important; max-width:100% !important; }
+
+    .panel { display:block !important; }
+    .panel:not(.print-target) { display:none !important; }
+
+    .card {
+      box-shadow:none !important;
+      border:1px solid #ccc !important;
+      break-inside:avoid;
+      margin-bottom:1rem !important;
+    }
+
+    .result-card {
+      border:1px solid #ccc !important;
+      break-inside:avoid;
+    }
+    .result-card.accent { background:#c8572a !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .result-card.blue   { background:#2a7bc8 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .result-card.gold   { background:#c8a02a !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .result-card.green  { background:#2a8c5a !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+
+    .strategy-body { display:block !important; }
+    .sources-strip { display:block !important; }
+    .disposable-banner { display:block !important; }
+
+    .print-header {
+      display:block !important;
+      border-bottom:2px solid #0f1923;
+      margin-bottom:1.5rem;
+      padding-bottom:0.75rem;
+    }
+
+    .msg { max-width:100% !important; }
+    .msg.user { background:#f0f0f0 !important; color:#000 !important; }
+    .msg.assistant { background:#e8e8e8 !important; color:#000 !important; }
+
+    .disclaimer { background:#fff8e1 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+
+    @page { margin:1.5cm; }
+  }
+
+  .print-header { display:none; }
+
+  /* ── SECTION NAVIGATION ─────────────────────────────────────── */
+  .section-nav {
+    display:flex; justify-content:space-between; align-items:center;
+    margin-top:1.5rem; padding-top:1.25rem;
+    border-top:1px solid var(--border);
+  }
+  .btn-nav {
+    display:inline-flex; align-items:center; gap:0.4rem;
+    padding:0.65rem 1.2rem; border-radius:8px; border:1.5px solid var(--border);
+    background:var(--card); color:var(--ink); cursor:pointer;
+    font-family:'DM Sans',sans-serif; font-size:0.85rem; font-weight:600;
+    transition:all 0.2s;
+  }
+  .btn-nav:hover { background:var(--ink); color:var(--paper); border-color:var(--ink); }
+  .btn-nav.next { background:var(--ink); color:var(--paper); border-color:var(--ink); }
+  .btn-nav.next:hover { background:#2a3e52; }
+  .section-nav .step-indicator {
+    font-size:0.72rem; font-weight:600; letter-spacing:0.08em;
+    text-transform:uppercase; color:var(--muted);
+  }
+  @media print { .section-nav { display:none !important; } }
+
+  /* ── MODALS ──────────────────────────────────────────────────── */
+  .modal-overlay {
+    display:none; position:fixed; inset:0; z-index:1000;
+    background:rgba(15,25,35,0.7); backdrop-filter:blur(4px);
+    align-items:center; justify-content:center; padding:1rem;
+  }
+  .modal-overlay.open { display:flex; animation:fadeUp 0.2s ease; }
+  .modal-box {
+    background:var(--card); border-radius:20px;
+    padding:2rem; max-width:440px; width:100%;
+    box-shadow:0 20px 60px rgba(0,0,0,0.3);
+    position:relative;
+  }
+  .modal-close {
+    position:absolute; top:1rem; right:1rem;
+    background:none; border:none; cursor:pointer;
+    font-size:1.2rem; color:var(--muted); line-height:1;
+  }
+  .modal-close:hover { color:var(--ink); }
+  .modal-title {
+    font-family:'Playfair Display',serif;
+    font-size:1.3rem; font-weight:700; margin-bottom:0.5rem;
+  }
+  .modal-subtitle {
+    font-size:0.82rem; color:var(--muted); line-height:1.65; margin-bottom:1.25rem;
+  }
+  .paypal-btn {
+    display:flex; align-items:center; justify-content:center; gap:0.5rem;
+    width:100%; padding:0.85rem;
+    background:#0070ba; color:#fff; border:none; border-radius:10px;
+    font-family:'DM Sans',sans-serif; font-size:0.95rem; font-weight:700;
+    cursor:pointer; text-decoration:none; margin-bottom:0.75rem;
+    transition:background 0.2s;
+  }
+  .paypal-btn:hover { background:#005ea6; }
+  .modal-skip {
+    display:block; text-align:center; font-size:0.78rem; color:var(--muted);
+    cursor:pointer; padding:0.4rem;
+    transition:color 0.2s;
+  }
+  .modal-skip:hover { color:var(--ink); }
+  .donation-amounts {
+    display:flex; gap:0.5rem; margin-bottom:1rem; flex-wrap:wrap;
+  }
+  .amt-chip {
+    padding:0.35rem 0.75rem; border-radius:20px;
+    border:1.5px solid var(--border); background:var(--paper);
+    font-size:0.82rem; font-weight:600; cursor:pointer;
+    transition:all 0.15s; font-family:'DM Sans',sans-serif;
+  }
+  .amt-chip:hover, .amt-chip.selected {
+    background:var(--ink); color:var(--paper); border-color:var(--ink);
+  }
+  .creator-badge {
+    display:inline-flex; align-items:center; gap:0.3rem;
+    background:#e0f7e9; color:#1a5c35; border-radius:20px;
+    padding:0.2rem 0.65rem; font-size:0.72rem; font-weight:600;
+    border:1px solid #a7d7b8; margin-bottom:1rem;
+  }
+
+  /* ── FOOTER ──────────────────────────────────────────────────── */
+  .app-footer {
+    text-align:center; padding:2rem 1rem 3rem;
+    font-size:0.72rem; color:var(--muted);
+    border-top:1px solid var(--border); margin-top:1rem;
+  }
+  .creator-trigger {
+    display:inline-block; margin-top:0.5rem;
+    font-size:0.65rem; color:var(--border); cursor:pointer;
+    letter-spacing:0.05em; text-decoration:none;
+    transition:color 0.2s;
+  }
+  .creator-trigger:hover { color:var(--muted); }
+
+  @media print {
+    .modal-overlay, .app-footer { display:none !important; }
+  }
 </style>
 </head>
 <body>
@@ -166,6 +326,10 @@
 
 <!-- ══ CALCULATOR ══ -->
 <div id="panel-calculator" class="panel active">
+  <div class="print-header">
+    <div style="font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:900;">CoParent Compass</div>
+    <div style="font-size:0.85rem;color:#555;margin-top:0.2rem;">Child Support Calculator Report — Printed <span id="print-date-calc"></span></div>
+  </div>
 
   <div class="card">
     <div class="card-title">🌍 Location Context <span class="data-note">🔍 Powers live search</span></div>
@@ -355,16 +519,27 @@
   <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
     <button class="btn btn-live btn-block" id="live-btn" onclick="runLiveSearch()">🔍 Research Live Data for My Location</button>
     <button class="btn btn-outline" onclick="resetResults()">↺ Reset</button>
+    <button class="print-btn" onclick="printSection('calculator')" title="Print or save as PDF">🖨️ Print Report</button>
+    <button class="print-btn" onclick="emailReport('calculator')" title="Email this report">✉️ Email Report</button>
   </div>
 
   <div class="disclaimer">
     <strong>⚠️ Educational Estimates Only</strong>
     Figures are AI-generated estimates based on live web research. Not legal determinations. Child support is set by courts using jurisdiction-specific formulas. Consult a licensed family law attorney for advice specific to your situation.
   </div>
+  <div class="section-nav" id="calc-nav" style="display:none;">
+    <span></span>
+    <span class="step-indicator">Step 1 of 3</span>
+    <button class="btn-nav next" onclick="switchTab('shield');scrollToTop()">Next: Alienation Shield →</button>
+  </div>
 </div>
 
 <!-- ══ SHIELD ══ -->
 <div id="panel-shield" class="panel">
+  <div class="print-header">
+    <div style="font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:900;">CoParent Compass</div>
+    <div style="font-size:0.85rem;color:#555;margin-top:0.2rem;">Alienation Shield Strategies — Printed <span id="print-date-shield"></span></div>
+  </div>
   <div class="section-header"><h2>Alienation Shield</h2><div class="line"></div><span class="info-chip">🛡️ Protective Strategies</span></div>
 
   <!-- Situational intake -->
@@ -485,10 +660,23 @@
     </div>
   </div>
   <div class="disclaimer"><strong>💙 On These Strategies</strong> Practical tools, not guarantees. Every situation is unique. The goal is always the wellbeing of your children — not victory over the other parent.</div>
+  <div style="text-align:right;">
+    <button class="print-btn" onclick="printSection('shield')">🖨️ Print Strategies</button>
+    <button class="print-btn" onclick="emailReport('shield')">✉️ Email Strategies</button>
+  </div>
+  <div class="section-nav">
+    <button class="btn-nav" onclick="switchTab('calculator');scrollToTop()">← Back: Calculator</button>
+    <span class="step-indicator">Step 2 of 3</span>
+    <button class="btn-nav next" onclick="switchTab('advisor');scrollToTop()">Next: AI Advisor →</button>
+  </div>
 </div>
 
 <!-- ══ ADVISOR ══ -->
 <div id="panel-advisor" class="panel">
+  <div class="print-header">
+    <div style="font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:900;">CoParent Compass</div>
+    <div style="font-size:0.85rem;color:#555;margin-top:0.2rem;">AI Advisor Conversation Log — Printed <span id="print-date-advisor"></span></div>
+  </div>
   <div class="section-header"><h2>AI Advisor</h2><div class="line"></div><span class="info-chip">💬 Confidential Space</span></div>
 
   <!-- Context intake for advisor -->
@@ -555,6 +743,15 @@
     </div>
   </div>
   <div class="disclaimer" style="margin-top:1rem;"><strong>🔒 About This Advisor</strong> Educational information and emotional support only — not legal, financial, or psychological advice. For serious matters, consult a licensed family law attorney or qualified therapist.</div>
+  <div style="text-align:right;">
+    <button class="print-btn" onclick="printSection('advisor')">🖨️ Print Conversation</button>
+    <button class="print-btn" onclick="emailReport('advisor')">✉️ Email Conversation</button>
+  </div>
+  <div class="section-nav">
+    <button class="btn-nav" onclick="switchTab('shield');scrollToTop()">← Back: Alienation Shield</button>
+    <span class="step-indicator">Step 3 of 3</span>
+    <span></span>
+  </div>
 </div>
 
 </main>
@@ -676,6 +873,10 @@
 
   function toggleStrategy(el) { el.classList.toggle('open'); }
 
+  function scrollToTop() {
+    window.scrollTo({ top:0, behavior:'smooth' });
+  }
+
   function resetResults() {
     document.getElementById('results-card').style.display = 'none';
     document.getElementById('search-status').classList.remove('visible');
@@ -766,19 +967,53 @@
       if (si < stepLabels.length) { setStep(si, 'active'); si++; }
     }, 2000);
 
-    const prompt = `Search web for current 2024-2025 child costs in ${city}, ${country}. Run 2-3 searches max.
+    // Consumption metrics by age — baked in locally, zero extra API cost
+    const CONSUMPTION = {
+      infant: [
+        'Diapers: ~8-10/day = 240-300/mo. Wipes: ~80-100 packs/yr. Formula (if not breastfed): ~900g tin lasts ~1 week.',
+        'Clothing: outgrown every 2-3 months, budget for 4-6 outfit sets per size. Shoes: not needed under 12mo.',
+        'Healthcare: immunisation schedule monthly for first 6mo. Avg 4-6 clinic visits/yr.',
+        'Food: breastfeeding = near zero cost; formula = significant weekly cost. Solids from ~6mo (purees, soft foods).'
+      ],
+      toddler: [
+        'Diapers: ~5-6/day = 150-180/mo until toilet-trained (avg age 2.5-3). Pull-ups during transition.',
+        'Clothing: outgrown every 4-6 months. Shoes: replace every 3-4 months (feet grow fast).',
+        'Food: 3 meals + 2 snacks/day. Toddler eats roughly 1/4 to 1/3 of adult portion.',
+        'Healthcare: 2-4 wellness visits/yr plus illness visits. Dental starts age 1.'
+      ],
+      child: [
+        'Clothing: 2 full outfit sets per season, shoes every 6-8 months, school uniform if applicable.',
+        'Food: 3 meals + 1-2 snacks/day. School lunch adds cost if not packed.',
+        'School: fees, stationery, books, uniform. Transport to/from school daily.',
+        'Healthcare: annual checkup + dental twice yearly. Glasses if needed.'
+      ],
+      teen: [
+        'Food: appetite increases significantly — near adult portions. 3 meals + snacks.',
+        'Clothing: brand awareness increases cost. Shoes every 6 months (growth spurts).',
+        'Education: exam fees, devices/data, possible tutoring.',
+        'Transport: independent travel costs. Recreation: peer activities, data, outings.'
+      ]
+    };
+    const consumptionContext = ages.map((age, i) =>
+      'Child ' + (i+1) + ' consumption (' + ageLabels[age] + '): ' + CONSUMPTION[age].join(' | ')
+    ).join('\n');
 
-Context: ${childDesc}. Living standard: ${stdLabels[standard]}. Father custody: ${custody}%. Disposable income: ${disposable > 0 ? disposable + ' ' + incomeCur : 'unknown'}.
+    const prompt = `Search web for current 2024-2025 child costs in ${city}, ${country}. 2-3 searches max.
 
-Age rules (strictly follow):
+${childDesc}. Standard: ${stdLabels[standard]}. Custody: ${custody}%. Disposable: ${disposable > 0 ? disposable + ' ' + incomeCur : 'unknown'}.
+
+CONSUMPTION METRICS (use to ground cost estimates):
+${consumptionContext}
+
+AGE RULES:
 ${ageContexts}
 
-Regional rules: African/Asian contexts — extended family covers infant care, creche optional before age 3, use public school/clinic costs not private. Western/UAE/SG — include formal daycare. Only add recreation costs for comfortable/affluent.
+REGIONAL: Africa/Asia — extended family for infants, creche optional <age 3, public school/clinic costs. West/UAE/SG — formal daycare expected. Recreation only for comfortable/affluent.
 
-Return ONLY this JSON (no markdown, no text outside JSON). All amounts in local currency of ${country}:
-{"currency":"","currency_symbol":"","location_summary":"","societal_context":"","data_confidence":70,"sources_used":[],"sources_summary":"","inflation_note":"","father_disposable_note":"${disposable > 0 ? 'Disposable: ' + disposable + ' ' + incomeCur + '. Is share sustainable?' : ''}","categories":[{"key":"food","label":"Food & Nutrition","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"priority":"high","frequency":"Daily","notes":""},{"key":"clothing","label":"Clothing & Shoes","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"priority":"mid","frequency":"Monthly","notes":""},{"key":"healthcare","label":"Healthcare & Medical","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"priority":"high","frequency":"As needed","notes":""},{"key":"childcare","label":"Childcare / School Fees","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"priority":"high","frequency":"Monthly","notes":""},{"key":"transport","label":"Transportation","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"priority":"mid","frequency":"Daily","notes":""},{"key":"recreation","label":"Recreation & Activities","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"priority":"low","frequency":"Weekly","notes":""},{"key":"personal","label":"Personal Care","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"priority":"mid","frequency":"Monthly","notes":""},{"key":"housing","label":"Housing Contribution","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"priority":"high","frequency":"Monthly","notes":""},{"key":"misc","label":"Miscellaneous","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"priority":"low","frequency":"Monthly","notes":""}],"multi_child_note":"","legal_context":"","ai_notes":""}
+Return ONLY JSON. All amounts local currency of ${country}:
+{"currency":"","currency_symbol":"","location_summary":"","societal_context":"","data_confidence":70,"sources_used":[],"sources_summary":"","inflation_note":"","father_disposable_note":"${disposable > 0 ? 'Disposable: ' + disposable + ' ' + incomeCur + '. Sustainable?' : ''}","categories":[{"key":"food","label":"Food & Nutrition","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"priority":"high","frequency":"Daily","notes":""},{"key":"clothing","label":"Clothing & Shoes","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"priority":"mid","frequency":"Monthly","notes":""},{"key":"healthcare","label":"Healthcare & Medical","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"priority":"high","frequency":"As needed","notes":""},{"key":"childcare","label":"Childcare / School Fees","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"priority":"high","frequency":"Monthly","notes":""},{"key":"transport","label":"Transportation","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"priority":"mid","frequency":"Daily","notes":""},{"key":"recreation","label":"Recreation & Activities","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"priority":"low","frequency":"Weekly","notes":""},{"key":"personal","label":"Personal Care","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"priority":"mid","frequency":"Monthly","notes":""},{"key":"housing","label":"Housing Contribution","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"priority":"high","frequency":"Monthly","notes":""},{"key":"misc","label":"Miscellaneous","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"priority":"low","frequency":"Monthly","notes":""}],"multi_child_note":"","legal_context":"","ai_notes":""}
 
-Set applies:false and values to 0 for N/A categories per age rules above.`;
+Set applies:false and values 0 for N/A age categories above.`;
 
     try {
       const data = await callClaude({
@@ -914,6 +1149,8 @@ Set applies:false and values to 0 for N/A categories per age rules above.`;
 
     document.getElementById('results-card').style.display = 'block';
     document.getElementById('results-card').scrollIntoView({ behavior:'smooth', block:'start' });
+    // Show next navigation now that calculator is complete
+    document.getElementById('calc-nav').style.display = 'flex';
   }
 
   // ── Advisor chat ────────────────────────────────────────────────────
@@ -1059,6 +1296,226 @@ Set applies:false and values to 0 for N/A categories per age rules above.`;
   function removeLoading(id) {
     const el = document.getElementById(id); if (el) el.remove();
   }
+  // ── Creator mode state (session only) ──────────────────────────────
+  let _creatorMode = false;
+
+  async function verifyCreator() {
+    const pass = document.getElementById('creator-pass-input').value;
+    const errEl = document.getElementById('creator-error');
+    errEl.style.display = 'none';
+    if (!pass) return;
+    try {
+      const res = await fetch('/api/claude', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ _action:'verify_creator', _pass:pass })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        _creatorMode = true;
+        document.getElementById('creator-modal').classList.remove('open');
+        document.getElementById('creator-pass-input').value = '';
+        // Show a small badge on the header
+        const badge = document.createElement('div');
+        badge.className = 'creator-badge';
+        badge.style.cssText = 'position:fixed;bottom:1rem;right:1rem;z-index:500;';
+        badge.innerHTML = '🔑 Creator Mode Active';
+        document.body.appendChild(badge);
+        setTimeout(() => badge.style.opacity = '0.5', 3000);
+      } else {
+        errEl.textContent = 'Incorrect password. Try again.';
+        errEl.style.display = 'block';
+      }
+    } catch(e) {
+      errEl.textContent = 'Connection error. Please try again.';
+      errEl.style.display = 'block';
+    }
+  }
+
+  // ── Donation gate ─────────────────────────────────────────────────────
+  let _pendingAction = null;
+  let _selectedAmt = '3';
+
+  function requestWithDonation(actionType, actionFn) {
+    if (_creatorMode) { actionFn(); return; }
+    _pendingAction = { type: actionType, fn: actionFn };
+    document.getElementById('donation-content').style.display = 'block';
+    document.getElementById('donation-thanks').style.display = 'none';
+    updatePayPalLink();
+    document.getElementById('donation-modal').classList.add('open');
+  }
+
+  function selectAmt(el, amt) {
+    document.querySelectorAll('.amt-chip').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    _selectedAmt = amt === 'other' ? 'Any' : amt;
+    updatePayPalLink();
+  }
+
+  function updatePayPalLink() {
+    const amt = _selectedAmt === 'Any' ? '' : '/' + _selectedAmt;
+    document.getElementById('paypal-link').href = 'https://paypal.me/jonathanoladeji' + amt;
+  }
+
+  function onDonateClick() {
+    // After clicking PayPal link, show thank you and complete action
+    setTimeout(() => {
+      document.getElementById('donation-content').style.display = 'none';
+      document.getElementById('donation-thanks').style.display = 'block';
+      document.getElementById('thanks-action').textContent =
+        _pendingAction && _pendingAction.type === 'print' ? 'print report' : 'email report';
+    }, 800);
+  }
+
+  function skipDonation() {
+    document.getElementById('donation-modal').classList.remove('open');
+    if (_pendingAction) { _pendingAction.fn(); _pendingAction = null; }
+  }
+
+  function closeDonation() {
+    document.getElementById('donation-modal').classList.remove('open');
+    _pendingAction = null;
+  }
+
+  function completeDonationAction() {
+    document.getElementById('donation-modal').classList.remove('open');
+    if (_pendingAction) { _pendingAction.fn(); _pendingAction = null; }
+  }
+
+  // ── Print section ────────────────────────────────────────────────────
+  function printSection(section) {
+    requestWithDonation('print', () => doPrint(section));
+  }
+
+  function doPrint(section) {
+    const now = new Date().toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' });
+    ['calc','shield','advisor'].forEach(s => {
+      const el = document.getElementById('print-date-' + s);
+      if (el) el.textContent = now;
+    });
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('print-target'));
+    const target = document.getElementById('panel-' + section);
+    if (target) target.classList.add('print-target');
+    if (section === 'shield') {
+      document.querySelectorAll('.strategy-card').forEach(c => c.classList.add('open'));
+    }
+    window.print();
+    if (section === 'shield') {
+      document.querySelectorAll('.strategy-card').forEach((c, i) => {
+        if (i > 0) c.classList.remove('open');
+      });
+    }
+  }
+
+  // ── Email report ─────────────────────────────────────────────────────
+  function emailReport(section) {
+    requestWithDonation('email', () => doEmailReport(section));
+  }
+
+  function doEmailReport(section) {
+    // Build a plain-text summary of the active section to mailto
+    let subject = 'CoParent Compass Report';
+    let body = 'CoParent Compass Report\n';
+    body += '============================\n';
+    body += 'Generated: ' + new Date().toLocaleDateString('en-GB', {day:'numeric',month:'long',year:'numeric'}) + '\n\n';
+
+    if (section === 'calculator') {
+      subject = 'My Child Support Estimate — CoParent Compass';
+      const total  = document.getElementById('r-total')?.textContent || '—';
+      const share  = document.getElementById('r-share')?.textContent || '—';
+      const pct    = document.getElementById('r-pct')?.textContent || '—';
+      const pctD   = document.getElementById('r-pct-disp')?.textContent || '—';
+      const annual = document.getElementById('r-annual')?.textContent || '—';
+      const notes  = document.getElementById('ai-notes')?.innerText || '';
+      body += 'CHILD SUPPORT CALCULATOR SUMMARY\n\n';
+      body += 'Total monthly child cost: ' + total + '\n';
+      body += 'Your proportional share: ' + share + '\n';
+      body += '% of gross income: ' + pct + '\n';
+      body += '% of disposable income: ' + pctD + '\n';
+      body += 'Annual estimate: ' + annual + '\n\n';
+      if (notes) body += 'Notes:\n' + notes + '\n\n';
+      body += '--- Generated by CoParent Compass (coparent-compass.vercel.app) ---\n';
+      body += 'Educational estimate only. Not legal advice.';
+    } else if (section === 'shield') {
+      subject = 'My Alienation Shield Plan — CoParent Compass';
+      const recs = document.getElementById('shield-priority-note')?.innerText || '';
+      body += 'ALIENATION SHIELD — PRIORITY RECOMMENDATIONS\n\n';
+      if (recs) body += recs + '\n\n';
+      body += 'Full strategies available at coparent-compass.vercel.app\n\n';
+      body += '--- Generated by CoParent Compass ---';
+    } else if (section === 'advisor') {
+      subject = 'My Co-Parenting Advisor Notes — CoParent Compass';
+      body += 'AI ADVISOR CONVERSATION SUMMARY\n\n';
+      const msgs = document.querySelectorAll('#chat-messages .msg');
+      msgs.forEach(m => {
+        const role = m.classList.contains('user') ? 'Me' : 'Advisor';
+        body += role + ': ' + m.innerText + '\n\n';
+      });
+      body += '--- Generated by CoParent Compass ---\n';
+      body += 'Not legal advice. Consult a qualified attorney for legal matters.';
+    }
+
+    const mailto = 'mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+    window.location.href = mailto;
+  }
+
+
 </script>
+
+<!-- ── DONATION MODAL ── -->
+<div class="modal-overlay" id="donation-modal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeDonation()">✕</button>
+    <div id="donation-content">
+      <div class="modal-title">💙 Support This Tool</div>
+      <div class="modal-subtitle">
+        CoParent Compass is a <strong>nonprofit effort</strong> built to help fathers navigate one of life's hardest challenges — for free. We cover hosting and AI costs through voluntary donations.<br><br>
+        A small contribution of <strong>$3 or more</strong> helps keep it available to every father who needs it.
+      </div>
+      <div class="donation-amounts">
+        <button class="amt-chip selected" onclick="selectAmt(this,'3')">$3</button>
+        <button class="amt-chip" onclick="selectAmt(this,'5')">$5</button>
+        <button class="amt-chip" onclick="selectAmt(this,'10')">$10</button>
+        <button class="amt-chip" onclick="selectAmt(this,'20')">$20</button>
+        <button class="amt-chip" onclick="selectAmt(this,'other')">Other</button>
+      </div>
+      <a id="paypal-link" class="paypal-btn" href="https://paypal.me/jonathanoladeji/3" target="_blank" rel="noopener" onclick="onDonateClick()">
+        💳 Donate via PayPal
+      </a>
+      <span class="modal-skip" onclick="skipDonation()">Skip for now — continue without donating</span>
+    </div>
+    <div id="donation-thanks" style="display:none;text-align:center;padding:1rem 0;">
+      <div style="font-size:2rem;margin-bottom:0.75rem;">🙏</div>
+      <div class="modal-title">Thank you!</div>
+      <div style="font-size:0.85rem;color:var(--muted);line-height:1.65;margin:0.5rem 0 1.25rem;">
+        Your support means a lot. Your <span id="thanks-action"></span> is ready.
+      </div>
+      <button class="btn btn-secondary" style="width:100%;" onclick="completeDonationAction()">Continue →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── CREATOR MODE MODAL ── -->
+<div class="modal-overlay" id="creator-modal">
+  <div class="modal-box" style="max-width:360px;">
+    <button class="modal-close" onclick="document.getElementById('creator-modal').classList.remove('open')">✕</button>
+    <div class="modal-title">🔑 Creator Access</div>
+    <div class="modal-subtitle">Enter your creator password to bypass the donation prompt for this session.</div>
+    <div class="form-group" style="margin-bottom:1rem;">
+      <label>Password</label>
+      <input type="password" id="creator-pass-input" placeholder="Enter password..." onkeydown="if(event.key==='Enter')verifyCreator()">
+    </div>
+    <div id="creator-error" style="display:none;color:#991b1b;font-size:0.78rem;margin-bottom:0.75rem;"></div>
+    <button class="btn btn-secondary" style="width:100%;" onclick="verifyCreator()">Verify →</button>
+  </div>
+</div>
+
+<!-- ── APP FOOTER ── -->
+<div class="app-footer">
+  <div>CoParent Compass · Built for fathers · Not legal advice</div>
+  <div>Nonprofit tool · Costs covered by voluntary donations</div>
+  <span class="creator-trigger" onclick="document.getElementById('creator-modal').classList.add('open')" title="Creator access">·</span>
+</div>
+
 </body>
 </html>
