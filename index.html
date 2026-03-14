@@ -442,7 +442,7 @@
         <span>Include my own monthly living costs (recommended for accuracy)</span>
       </label>
     </div>
-    <div class="father-costs-section" id="fatherCostsSection">
+    <div class="father-costs-section" id="fatherCostsSection" style="display:none;">
         <div class="form-grid">
           <div class="form-group">
             <label>Your Rent / Housing</label>
@@ -850,8 +850,14 @@
   }
 
   function toggleFatherCosts() {
+    const cb = document.getElementById('showFatherCosts');
     const section = document.getElementById('fatherCostsSection');
-    section.classList.toggle('visible', document.getElementById('showFatherCosts').checked);
+    if (cb.checked) {
+      section.style.display = 'block';
+      section.style.animation = 'fadeUp 0.25s ease';
+    } else {
+      section.style.display = 'none';
+    }
     updateDisposable();
   }
 
