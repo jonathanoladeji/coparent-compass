@@ -953,19 +953,20 @@
     }).join('\n');
 
     const stepLabels = [
-      `Searching cost-of-living data — ${city}, ${country}`,
-      `Looking up age-appropriate child expenses`,
-      `Researching housing, food & healthcare costs`,
-      `Checking societal & cultural childcare context`,
-      `Synthesising into disposable-income-aware breakdown`
+      'Pass 1 — Searching live costs for ' + city + ', ' + country,
+      'Pass 1 — Extracting age-appropriate figures',
+      'Pass 2 — Formatting into structured breakdown',
+      'Pass 2 — Calculating share & disposable impact',
+      'Complete'
     ];
     buildSteps(stepLabels);
+    setStep(0, 'active');
 
-    let si = 0;
+    // Visually advance steps during Pass 1 web search
+    let si = 1;
     const stepTimer = setInterval(() => {
-      if (si > 0) setStep(si-1, 'done');
-      if (si < stepLabels.length) { setStep(si, 'active'); si++; }
-    }, 2000);
+      if (si < 2) { setStep(si-1, 'done'); setStep(si, 'active'); si++; }
+    }, 4000);
 
     // Consumption metrics by age — baked in locally, zero extra API cost
     const CONSUMPTION = {
@@ -998,50 +999,86 @@
       'Child ' + (i+1) + ' consumption (' + ageLabels[age] + '): ' + CONSUMPTION[age].join(' | ')
     ).join('\n');
 
-    const prompt = `Search web for current 2024-2025 child costs in ${city}, ${country}. 2-3 searches max.
+    // ── TWO-PASS ARCHITECTURE ─────────────────────────────────────────
+    // Pass 1: Haiku + web search → compact raw figures (small output, cheap)
+    // Pass 2: Haiku, no search  → format raw data into JSON (tiny, near-free)
+    // Splits the heavy + formatting work so neither call truncates.
 
-${childDesc}. Standard: ${stdLabels[standard]}. Custody: ${custody}%. Disposable: ${disposable > 0 ? disposable + ' ' + incomeCur : 'unknown'}.
+    // PASS 1: Search and return plain-text cost estimates only
+    const pass1Prompt = `Search for current 2024-2025 child costs in ${city}, ${country}. 2 searches max.
+Child: ${childDesc}. Standard: ${stdLabels[standard]}.
+Consumption: ${consumptionContext}
 
-CONSUMPTION METRICS (use to ground cost estimates):
-${consumptionContext}
-
-AGE RULES:
-${ageContexts}
-
-REGIONAL: Africa/Asia — extended family for infants, creche optional <age 3, public school/clinic costs. West/UAE/SG — formal daycare expected. Recreation only for comfortable/affluent.
-
-Return ONLY JSON (no markdown). Local currency of ${country}. Keep notes under 8 words each:
-{"currency":"","currency_symbol":"","location_summary":"","societal_context":"","data_confidence":70,"sources_used":[""],"sources_summary":"","inflation_note":"","father_disposable_note":"","categories":[{"key":"food","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"notes":""},{"key":"clothing","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"notes":""},{"key":"healthcare","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"notes":""},{"key":"childcare","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"notes":""},{"key":"transport","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"notes":""},{"key":"recreation","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"notes":""},{"key":"personal","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"notes":""},{"key":"housing","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"notes":""},{"key":"misc","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"notes":""}],"multi_child_note":"","legal_context":"","ai_notes":""}
-
-Set applies:false and values 0 for N/A categories. Fill father_disposable_note if disposable income provided.`;
+Return ONLY this plain-text format, no explanation:
+CURRENCY: [code] [symbol]
+ECONOMY: [one sentence]
+SOCIETY: [one sentence on family/school/clinic norms]
+SOURCES: [names]
+CONFIDENCE: [50-95]
+food: [low]-[high] ([mid])
+clothing: [low]-[high] ([mid])
+healthcare: [low]-[high] ([mid])
+childcare: [low]-[high] ([mid])
+transport: [low]-[high] ([mid])
+recreation: [low]-[high] ([mid])
+personal: [low]-[high] ([mid])
+housing: [low]-[high] ([mid])
+misc: [low]-[high] ([mid])
+LEGAL: [one sentence]
+NOTES: [one sentence]`;
 
     try {
-      const data = await callClaude({
+      // PASS 1 — Haiku + web search, raw figures only, small output
+      const pass1 = await callClaude({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 3000,
+        max_tokens: 700,
         tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-        messages: [{ role: 'user', content: prompt }]
+        messages: [{ role: 'user', content: pass1Prompt }]
+      });
+
+      setStep(2, 'active');
+      const rawText = (pass1.content || []).filter(b => b.type === 'text').map(b => b.text).join('').trim();
+      if (!rawText) throw new Error('No data returned from research. Please try again.');
+
+      // N/A keys from age rules (computed client-side, no tokens needed)
+      const naKeys = [...new Set(ages.flatMap(age => AGE_CATEGORIES[age].na.map(n => n.key)))];
+
+      // PASS 2: Format raw text into JSON — no web search, pure restructuring
+      const pass2Prompt = `Convert this raw child cost data to JSON. Do NOT search the web.
+
+RAW DATA:
+${rawText}
+
+DISPOSABLE: ${disposable > 0 ? disposable + ' ' + incomeCur + '/mo — assess sustainability' : 'not provided'}
+N/A KEYS (set applies:false, values 0): ${naKeys.length ? naKeys.join(',') : 'none'}
+
+Return ONLY valid JSON, no markdown:
+{"currency":"","currency_symbol":"","location_summary":"","societal_context":"","data_confidence":70,"sources_used":[],"sources_summary":"","inflation_note":"","father_disposable_note":"","categories":[{"key":"food","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"notes":""},{"key":"clothing","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"notes":""},{"key":"healthcare","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"notes":""},{"key":"childcare","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"notes":""},{"key":"transport","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"notes":""},{"key":"recreation","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"notes":""},{"key":"personal","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"notes":""},{"key":"housing","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"notes":""},{"key":"misc","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"notes":""}],"multi_child_note":"","legal_context":"","ai_notes":""}`;
+
+      setStep(3, 'active');
+      // PASS 2 — Haiku, no web search, just formatting the raw data
+      const pass2 = await callClaude({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1100,
+        messages: [{ role: 'user', content: pass2Prompt }]
       });
 
       clearInterval(stepTimer);
-      stepLabels.forEach((_,i) => setStep(i, 'done'));
+      stepLabels.forEach((_,idx) => setStep(idx, 'done'));
 
-      const textBlocks = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
+      const jsonText = (pass2.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
       let parsed;
       try {
-        // Strip markdown fences and whitespace
-        let clean = textBlocks.replace(/```json\s*/gi,'').replace(/```/g,'').trim();
-        // Try to extract outermost JSON object
+        let clean = jsonText.replace(/```json\s*/gi,'').replace(/```/g,'').trim();
         const start = clean.indexOf('{');
         const end   = clean.lastIndexOf('}');
-        if (start === -1 || end === -1) throw new Error('No JSON object found in response');
-        const jsonStr = clean.slice(start, end + 1);
-        parsed = JSON.parse(jsonStr);
+        if (start === -1 || end === -1) throw new Error('No JSON found in formatter output');
+        parsed = JSON.parse(clean.slice(start, end + 1));
       } catch(e) {
-        // Log the raw response to console for debugging
-        console.error('Parse error:', e.message);
-        console.error('Raw response:', textBlocks.substring(0, 500));
-        throw new Error('Could not parse research data: ' + e.message + '. Check browser console for details.');
+        console.error('Pass 2 parse error:', e.message);
+        console.error('Pass 1 raw:', rawText.substring(0, 400));
+        console.error('Pass 2 out:', jsonText.substring(0, 400));
+        throw new Error('Could not format research data: ' + e.message);
       }
 
       await delay(300);
