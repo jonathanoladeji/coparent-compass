@@ -1000,66 +1000,97 @@
     ).join('\n');
 
     // ── TWO-PASS ARCHITECTURE ─────────────────────────────────────────
-    // Pass 1: Haiku + web search → compact raw figures (small output, cheap)
-    // Pass 2: Haiku, no search  → format raw data into JSON (tiny, near-free)
-    // Splits the heavy + formatting work so neither call truncates.
+    // Pass 1: Haiku + web search — ONLY job is fetching local prices (lean output)
+    // Pass 2: Haiku, no search  — ALL context/reasoning applied to those prices
+    // Web search overhead stays separate from contextual reasoning.
 
-    // PASS 1: Search and return plain-text cost estimates only
-    const pass1Prompt = `Search for current 2024-2025 child costs in ${city}, ${country}. 2 searches max.
-Child: ${childDesc}. Standard: ${stdLabels[standard]}.
-Consumption: ${consumptionContext}
+    // PASS 1: Pure price lookup — no context, no reasoning, just numbers
+    const pass1Prompt = `Search for current 2024-2025 prices in ${city}, ${country}. Run 2 searches.
 
-Return ONLY this plain-text format, no explanation:
-CURRENCY: [code] [symbol]
-ECONOMY: [one sentence]
-SOCIETY: [one sentence on family/school/clinic norms]
-SOURCES: [names]
+Find actual market prices for a ${stdLabels[standard]} household with children. Return ONLY this format:
+CURRENCY: [code and symbol, e.g. ZAR R]
+ECONOMY: [one sentence: inflation rate, economic context]
+SOCIETY: [one sentence: extended family norms, public vs private schools, public clinic availability]
+SOURCES: [source names]
 CONFIDENCE: [50-95]
-food: [low]-[high] ([mid])
-clothing: [low]-[high] ([mid])
-healthcare: [low]-[high] ([mid])
-childcare: [low]-[high] ([mid])
-transport: [low]-[high] ([mid])
-recreation: [low]-[high] ([mid])
-personal: [low]-[high] ([mid])
-housing: [low]-[high] ([mid])
-misc: [low]-[high] ([mid])
-LEGAL: [one sentence]
-NOTES: [one sentence]`;
+food_child_monthly: [low]-[high]
+clothing_child_monthly: [low]-[high]
+healthcare_child_monthly: [low]-[high]
+creche_monthly: [low]-[high]
+school_fees_monthly: [low]-[high]
+transport_monthly: [low]-[high]
+recreation_monthly: [low]-[high]
+personal_care_monthly: [low]-[high]
+housing_per_person_monthly: [low]-[high]
+LEGAL: [child support law/norms in ${country} in one sentence]
+
+Numbers only. No explanations.`;
 
     try {
-      // PASS 1 — Haiku + web search, raw figures only, small output
+      // PASS 1 — Haiku + web search, price lookup only, tight output
       const pass1 = await callClaude({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 700,
+        max_tokens: 500,
         tools: [{ type: 'web_search_20250305', name: 'web_search' }],
         messages: [{ role: 'user', content: pass1Prompt }]
       });
 
       setStep(2, 'active');
-      const rawText = (pass1.content || []).filter(b => b.type === 'text').map(b => b.text).join('').trim();
-      if (!rawText) throw new Error('No data returned from research. Please try again.');
+      const rawPrices = (pass1.content || []).filter(b => b.type === 'text').map(b => b.text).join('').trim();
+      if (!rawPrices) throw new Error('No price data returned. Please try again.');
 
-      // N/A keys from age rules (computed client-side, no tokens needed)
+      // All context computed client-side — zero extra tokens for Pass 2 input
       const naKeys = [...new Set(ages.flatMap(age => AGE_CATEGORIES[age].na.map(n => n.key)))];
 
-      // PASS 2: Format raw text into JSON — no web search, pure restructuring
-      const pass2Prompt = `Convert this raw child cost data to JSON. Do NOT search the web.
+      // PASS 2: Apply ALL context and reasoning — no web search, no truncation risk
+      // This pass does the intelligent work: age rules, consumption rates, societal
+      // factors, disposable income analysis, and final JSON output.
+      const pass2Prompt = `You are a child support analyst. Apply the context below to the raw prices to produce accurate estimates. Do NOT search the web.
 
-RAW DATA:
-${rawText}
+RAW LOCAL PRICES (from web research):
+${rawPrices}
 
-DISPOSABLE: ${disposable > 0 ? disposable + ' ' + incomeCur + '/mo — assess sustainability' : 'not provided'}
-N/A KEYS (set applies:false, values 0): ${naKeys.length ? naKeys.join(',') : 'none'}
+CHILDREN: ${childDesc}
+LIVING STANDARD: ${stdLabels[standard]}
+FATHER CUSTODY: ${custody}%
+FATHER DISPOSABLE INCOME: ${disposable > 0 ? disposable + ' ' + incomeCur + '/month after personal costs' : 'not provided'}
+
+CONSUMPTION RATES (use these to calculate realistic monthly totals):
+${consumptionContext}
+
+AGE-BASED EXCLUSIONS — set applies:false and all values to 0 for these:
+${naKeys.length ? naKeys.map(k => '- ' + k).join('
+') : '- none'}
+
+AGE CONTEXT:
+${ageContexts}
+
+REGIONAL RULES FOR ${country.toUpperCase()}:
+- African/Asian: extended family often covers infant/toddler care informally — reflect this in childcare costs
+- Creche before age 3 is optional and inconsistent in Sub-Saharan Africa
+- Use public school fees unless comfortable/affluent standard selected
+- Public clinic costs apply in SA/Kenya/Nigeria/Ghana — not private hospital rates
+- Only include recreation for comfortable/affluent standard or school-age+ children
+- Apply consumption rates (diapers/formula/clothing cycles) to ground food/personal/clothing figures
+
+TASK: Using the raw prices above and all context provided, calculate realistic monthly costs adjusted for:
+1. The child's specific age and what they actually need at that age
+2. Local societal norms (extended family, public services)
+3. The consumption rates (e.g. diapers 8-10/day × local price per pack)
+4. The father's disposable income and whether his share is sustainable
+5. The stated standard of living
 
 Return ONLY valid JSON, no markdown:
-{"currency":"","currency_symbol":"","location_summary":"","societal_context":"","data_confidence":70,"sources_used":[],"sources_summary":"","inflation_note":"","father_disposable_note":"","categories":[{"key":"food","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"notes":""},{"key":"clothing","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"notes":""},{"key":"healthcare","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"notes":""},{"key":"childcare","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"notes":""},{"key":"transport","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"notes":""},{"key":"recreation","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"notes":""},{"key":"personal","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"notes":""},{"key":"housing","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"notes":""},{"key":"misc","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"notes":""}],"multi_child_note":"","legal_context":"","ai_notes":""}`;
+{"currency":"","currency_symbol":"","location_summary":"","societal_context":"","data_confidence":70,"sources_used":[],"sources_summary":"","inflation_note":"","father_disposable_note":"","categories":[{"key":"food","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"notes":""},{"key":"clothing","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"notes":""},{"key":"healthcare","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"notes":""},{"key":"childcare","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"notes":""},{"key":"transport","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"notes":""},{"key":"recreation","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"notes":""},{"key":"personal","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"notes":""},{"key":"housing","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"notes":""},{"key":"misc","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"notes":""}],"multi_child_note":"","legal_context":"","ai_notes":""}
+
+Notes field: max 10 words per category explaining the key cost driver.
+father_disposable_note: assess whether the father's share is sustainable given his disposable income.`;
 
       setStep(3, 'active');
-      // PASS 2 — Haiku, no web search, just formatting the raw data
+      // PASS 2 — Haiku, no web search, full contextual reasoning into JSON
       const pass2 = await callClaude({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 1100,
+        max_tokens: 1400,
         messages: [{ role: 'user', content: pass2Prompt }]
       });
 
