@@ -1010,15 +1010,15 @@ ${ageContexts}
 
 REGIONAL: Africa/Asia — extended family for infants, creche optional <age 3, public school/clinic costs. West/UAE/SG — formal daycare expected. Recreation only for comfortable/affluent.
 
-Return ONLY JSON. All amounts local currency of ${country}:
-{"currency":"","currency_symbol":"","location_summary":"","societal_context":"","data_confidence":70,"sources_used":[],"sources_summary":"","inflation_note":"","father_disposable_note":"${disposable > 0 ? 'Disposable: ' + disposable + ' ' + incomeCur + '. Sustainable?' : ''}","categories":[{"key":"food","label":"Food & Nutrition","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"priority":"high","frequency":"Daily","notes":""},{"key":"clothing","label":"Clothing & Shoes","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"priority":"mid","frequency":"Monthly","notes":""},{"key":"healthcare","label":"Healthcare & Medical","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"priority":"high","frequency":"As needed","notes":""},{"key":"childcare","label":"Childcare / School Fees","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"priority":"high","frequency":"Monthly","notes":""},{"key":"transport","label":"Transportation","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"priority":"mid","frequency":"Daily","notes":""},{"key":"recreation","label":"Recreation & Activities","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"priority":"low","frequency":"Weekly","notes":""},{"key":"personal","label":"Personal Care","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"priority":"mid","frequency":"Monthly","notes":""},{"key":"housing","label":"Housing Contribution","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"priority":"high","frequency":"Monthly","notes":""},{"key":"misc","label":"Miscellaneous","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"priority":"low","frequency":"Monthly","notes":""}],"multi_child_note":"","legal_context":"","ai_notes":""}
+Return ONLY JSON (no markdown). Local currency of ${country}. Keep notes under 8 words each:
+{"currency":"","currency_symbol":"","location_summary":"","societal_context":"","data_confidence":70,"sources_used":[""],"sources_summary":"","inflation_note":"","father_disposable_note":"","categories":[{"key":"food","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"notes":""},{"key":"clothing","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"notes":""},{"key":"healthcare","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"notes":""},{"key":"childcare","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"notes":""},{"key":"transport","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"notes":""},{"key":"recreation","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"notes":""},{"key":"personal","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"notes":""},{"key":"housing","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"notes":""},{"key":"misc","monthly_mid":0,"monthly_low":0,"monthly_high":0,"applies":true,"notes":""}],"multi_child_note":"","legal_context":"","ai_notes":""}
 
-Set applies:false and values 0 for N/A age categories above.`;
+Set applies:false and values 0 for N/A categories. Fill father_disposable_note if disposable income provided.`;
 
     try {
       const data = await callClaude({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 2000,
+        max_tokens: 3000,
         tools: [{ type: 'web_search_20250305', name: 'web_search' }],
         messages: [{ role: 'user', content: prompt }]
       });
@@ -1073,6 +1073,20 @@ Set applies:false and values 0 for N/A age categories above.`;
     }
   }
 
+  // Static metadata for categories — label, priority, frequency
+  // Kept client-side so they don't need to be in the AI response (saves tokens)
+  const CAT_META = {
+    food:       { label:'Food & Nutrition',        priority:'high', frequency:'Daily'       },
+    clothing:   { label:'Clothing & Shoes',        priority:'mid',  frequency:'Monthly'     },
+    healthcare: { label:'Healthcare & Medical',    priority:'high', frequency:'As needed'   },
+    childcare:  { label:'Childcare / School Fees', priority:'high', frequency:'Monthly'     },
+    transport:  { label:'Transportation',          priority:'mid',  frequency:'Daily'       },
+    recreation: { label:'Recreation & Activities', priority:'low',  frequency:'Weekly'      },
+    personal:   { label:'Personal Care',           priority:'mid',  frequency:'Monthly'     },
+    housing:    { label:'Housing Contribution',    priority:'high', frequency:'Monthly'     },
+    misc:       { label:'Miscellaneous',           priority:'low',  frequency:'Monthly'     },
+  };
+
   function renderResults(d, numKids, custodyPct, income, incomeCur, disposable) {
     const sym  = d.currency_symbol || '';
     const cats = d.categories || [];
@@ -1120,16 +1134,17 @@ Set applies:false and values 0 for N/A age categories above.`;
 
     cats.forEach(c => {
       const applies = c.applies !== false;
+      const meta  = CAT_META[c.key] || { label: c.key, priority:'mid' };
       const note  = c.notes ? `<span class="range-note">${c.notes}</span>` : '';
       const range = applies && c.monthly_low && c.monthly_high
         ? `${fmt(c.monthly_low)} – ${fmt(c.monthly_high)}` : '—';
-      const p = c.priority || 'mid';
+      const p = meta.priority;
       const appliesCell = applies
         ? '<span style="color:var(--success);font-size:0.8rem;font-weight:600;">✓ Yes</span>'
         : '<span style="color:#aaa;font-size:0.8rem;">✗ N/A</span>';
 
       tbody.innerHTML += `<tr class="${applies ? '' : 'na-row'}">
-        <td>${c.label}${note}</td>
+        <td>${meta.label}${note}</td>
         <td class="mono">${applies ? fmt(c.monthly_mid) : '—'}</td>
         <td style="color:var(--muted);font-size:0.78rem;">${range}</td>
         <td>${appliesCell}</td>
